@@ -1232,8 +1232,18 @@ MixtrackPlatinum.scratchDisable = function (deck) {
 MixtrackPlatinum.scratchEnable = function (deck) {
     var alpha = 1.0/8;
     var beta = alpha/32;
+    var value = 1400
 
-    engine.scratchEnable(deck, 1240, 33+1/3, alpha, beta);
+    /*
+        Изначально value было 1240.
+        Увеличение значения - led индикация отстаёт от реальной позиции джога.
+        Уменьшение наоборот, делает индикацию быстрее.
+        Значение зависит от размера аудио буффера, а также того, сколько активных дек сейчас запущено.
+
+        2 деки, буффер 2.9ms = 1400.
+    */
+
+    engine.scratchEnable(deck, 1400, 33+1/3, alpha, beta);
     MixtrackPlatinum.stopScratchTimer(deck);
 };
 
