@@ -36,7 +36,7 @@ var MixtrackPlatinum = {};
 MixtrackPlatinum.init = function(id, debug) {
     MixtrackPlatinum.id = id;
     MixtrackPlatinum.debug = debug;
-    MixtrackPlatinum.octopusInput = new octopus.Input(1);
+    MixtrackPlatinum.octopusInput = new octopus.Input("[Channel1]");
 
     const mapControlHexToPadNumber = new Map();
     mapControlHexToPadNumber[0x21] = 1;

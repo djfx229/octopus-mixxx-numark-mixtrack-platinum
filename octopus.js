@@ -4,8 +4,8 @@
 
 (function (global) {
   class Output {
-    constructor(deck) {
-      this.deck = deck;
+    constructor(group) {
+      this.group = group;
     }
 
     led(numberPad, isEnable) {
@@ -13,10 +13,15 @@
     }
   }
 
+  /**
+   * Номерация падов выглядит следующим образом:
+   * [1][2][3][4]
+   * [5][6][7][8]
+   */
   class Layer {
-    constructor(deck) {
-      this.deck = deck;
-      this.output = new Output(deck);
+    constructor(group) {
+      this.group = group;
+      this.output = new Output(group);
       this.pressedShift = false;
     }
 
@@ -30,12 +35,37 @@
   }
 
   class BeatJumpLayer extends Layer {
-    constructor(deck) {
-      super(deck);
+    constructor(group) {
+      super(group);
+
+      this.mapPadToAction = new Map();
+      this.mapPadToAction[1] = {
+        jump: 1,
+        direction: "_backward",
+      };
+      this.mapPadToAction[2] = {
+        jump: 1,
+        direction: "_forward",
+      };
+      this.mapPadToAction[3] = {
+        jump: 4,
+        direction: "_backward",
+      };
+      this.mapPadToAction[4] = {
+        jump: 4,
+        direction: "_forward",
+      };
     }
 
     pad(numberPad, isPressed) {
       console.log("BeatJumpLayer: pressed pad " + numberPad);
+
+      if (isPressed) {
+        const action = this.mapPadToAction[numberPad];
+        const key = "beatjump_" + action.jump + action.direction;
+        engine.setValue(this.group, key, 1.0);
+      }
+
     }
 
     shift(isPressed) {
@@ -45,13 +75,16 @@
   }
 
   class HotCuesLayer extends Layer {
-    constructor(deck) {
-      super(deck);
+    constructor(group) {
+      super(group);
     }
 
     pad(numberPad, isPressed) {
       console.log("HotCuesLayer: pressed pad " + numberPad);
-      this.output.led(numberPad, true);
+
+      const operation = this.pressedShift ? "_clear" : "_activate";
+      const key = "hotcue_" + numberPad + operation;
+      engine.setValue(this.group, key, isPressed ? 1.0 : 0.0);
     }
   }
 
@@ -60,8 +93,8 @@
       super(options.deck);
       this.callback = options.callback;
 
-      this.hotcuesLayer = new HotCuesLayer(this.deck);
-      this.beatjumpsLayer = new BeatJumpLayer(this.deck);
+      this.hotcuesLayer = new HotCuesLayer(this.group);
+      this.beatjumpsLayer = new BeatJumpLayer(this.group);
       this.currentLayerNum = 1;
     }
 
@@ -88,12 +121,12 @@
   }
 
   class Input {
-    constructor(deck) {
-      this.deck = deck;
-      this.output = new Output(deck);
+    constructor(group) {
+      this.group = group;
+      this.output = new Output(group);
       this.isSwitchLayerState = false;
       this.switchLayersLayer = new SwitchLayersLayer({
-        deck: this.deck,
+        deck: this.group,
         callback: function (layer) {
           console.log("Input: callback change layer to " + layer);
         },

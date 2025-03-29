@@ -539,15 +539,6 @@
                 </options>
             </control>
             <control>
-                <group>[Sampler1]</group>
-                <key>MixtrackPlatinum.sampler[1].input</key>
-                <status>0x9F</status>
-                <midino>0x28</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel4]</group>
                 <key>MixtrackPlatinum.decks[4].hotcues[1].input</key>
                 <status>0x97</status>
@@ -916,15 +907,6 @@
                 <key>MixtrackPlatinum.decks[1].autoloop.auto3.input</key>
                 <status>0x94</status>
                 <midino>0x16</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Sampler1]</group>
-                <key>MixtrackPlatinum.sampler[1].input</key>
-                <status>0x9F</status>
-                <midino>0x21</midino>
                 <options>
                     <script-binding/>
                 </options>
