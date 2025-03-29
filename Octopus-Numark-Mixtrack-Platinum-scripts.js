@@ -35,10 +35,10 @@ MixtrackPlatinum.init = function (id, debug) {
     MixtrackPlatinum.debug = debug;
 
     const mapPadToLedHex = new Map();
-    mapPadToLedHex[1] = 0x21;
-    mapPadToLedHex[2] = 0x22;
-    mapPadToLedHex[3] = 0x23;
-    mapPadToLedHex[4] = 0x24;
+    mapPadToLedHex[1] = [0x21, 0x28];
+    mapPadToLedHex[2] = [0x22, 0x29];
+    mapPadToLedHex[3] = [0x23, 0x2A];
+    mapPadToLedHex[4] = [0x24, 0x2B];
 
     MixtrackPlatinum.octopusOutput = new octopus.DeviceOutput({
         midiChannel: 0x0F,
@@ -51,10 +51,16 @@ MixtrackPlatinum.init = function (id, debug) {
     MixtrackPlatinum.octopusInput.connect(MixtrackPlatinum.octopusOutput);
 
     const mapControlHexToPadNumber = new Map();
+    // row 1 from sampler pad mode, unshift
     mapControlHexToPadNumber[0x21] = 1;
     mapControlHexToPadNumber[0x22] = 2;
     mapControlHexToPadNumber[0x23] = 3;
     mapControlHexToPadNumber[0x24] = 4;
+    // row 1 from sampler pad mode, shift
+    mapControlHexToPadNumber[0x28] = 1;
+    mapControlHexToPadNumber[0x29] = 2;
+    mapControlHexToPadNumber[0x2A] = 3;
+    mapControlHexToPadNumber[0x2B] = 4;
     MixtrackPlatinum.mapControlHexToPadNumber = mapControlHexToPadNumber;
 
     MixtrackPlatinum.octopusPad = function (channel, control, value, status, group) {
@@ -1385,7 +1391,7 @@ MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group)
         MixtrackPlatinum.decks.shift();
         MixtrackPlatinum.effects.shift();
         MixtrackPlatinum.browse.shift();
-        MixtrackPlatinum.head_gain.shift();
+        MixtrackPlatinum.octopusInput.shift();
 
         // reset the beat jump scratch accumulators
         MixtrackPlatinum.scratch_accumulator[1] = 0;
@@ -1397,6 +1403,6 @@ MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group)
         MixtrackPlatinum.decks.unshift();
         MixtrackPlatinum.effects.unshift();
         MixtrackPlatinum.browse.unshift();
-        MixtrackPlatinum.head_gain.unshift();
+        MixtrackPlatinum.octopusInput.unshift();
     }
 };

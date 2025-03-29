@@ -20,6 +20,10 @@
     led(numberPad, value) {
       console.log("Output: led numberPad=" + numberPad + " , value=" + value + " ");
     }
+
+    clear() {
+      console.log("Output: clear()");
+    }
   }
 
   class EmptyOutput extends Output {
@@ -31,7 +35,12 @@
       console.log("EmptyOutput: led numberPad=" + numberPad + " , value=" + value + " ");
     }
   }
-
+  
+  /**
+   * @param options Object содержащий в себе:
+   * midiChannel - номер канала
+   * mapPadToLedHex - карта сопоставляющая номер пада с его midino кодом.
+   */
   class DeviceOutput extends Output {
     constructor(options) {
       super();
@@ -40,10 +49,19 @@
     }
 
     led(numberPad, value) {
-      const midino = this.mapPadToLedHex[numberPad];
-      console.log("DeviceOutput: led() midino=" + midino + ", numberPad=" + numberPad + " , value=" + value + " ");
+      const midinoArray = this.mapPadToLedHex[numberPad];
+      console.log("DeviceOutput: led() midinoArray=" + midinoArray + ", numberPad=" + numberPad + " , value=" + value + " ");
 
-      midi.sendShortMsg(0x90 | this.midiChannel, midino, value);
+      midinoArray.forEach((midino) => {
+        midi.sendShortMsg(0x90 | this.midiChannel, midino, value);
+      })
+    }
+
+    clear() {
+      console.log("DeviceOutput: clear()");
+      for (let number = 1; number <= 4; number++) {
+        this.led(number, LedValue.OFF);
+      }
     }
   }
 
@@ -61,11 +79,14 @@
 
     connect(output) {
       this.output = output;
+      this.updateLedState();
     }
 
     disconnect() {
       this.output = new EmptyOutput();
     }
+
+    updateLedState() {}
 
     pad(numberPad, isPressed) {
       console.log("Layer: pressed pad " + numberPad);
@@ -99,6 +120,13 @@
       };
     }
 
+    updateLedState() {
+      this.output.led(1, LedValue.OFF);
+      this.output.led(2, LedValue.ON);
+      this.output.led(3, LedValue.OFF);
+      this.output.led(4, LedValue.ON);      
+    }
+
     pad(numberPad, isPressed) {
       console.log("BeatJumpLayer: pressed pad " + numberPad);
 
@@ -107,24 +135,41 @@
         const key = "beatjump_" + action.jump + action.direction;
         engine.setValue(this.group, key, 1.0);
       }
-
-    }
-
-    shift(isPressed) {
-      super.shift(isPressed);
-      this.output.led(1, LedValue.OFF);
     }
   }
 
   class HotCuesLayer extends Layer {
     constructor(group) {
       super(group);
+
+      this.connections = new Map();
+
+      for (let number = 1; number <= 4; number++) {
+        this.connections[number] = this.connection(number);
+      }
+    }
+
+    connection(number) {
+      const callback = function(value, group, control) {
+        console.log("HotCuesLayer: testing makeConnection number=" + number + ", value=" + value + ", control=" + control);
+        this.output.led(number, value == 0 ? LedValue.OFF : LedValue.ON);
+      };
+
+      return engine.makeConnection(
+        this.group, 
+        "hotcue_" + number + "_status",
+        callback.bind(this)
+      );
+    }
+
+    updateLedState() {
+      for (let number = 1; number <= 4; number++) {
+        this.connections[number].trigger();
+      }
     }
 
     pad(numberPad, isPressed) {
       console.log("HotCuesLayer: pressed pad " + numberPad);
-
-      this.output.led(numberPad, isPressed ? LedValue.ON : LedValue.OFF);
 
       const operation = this.pressedShift ? "_clear" : "_activate";
       const key = "hotcue_" + numberPad + operation;
@@ -135,11 +180,15 @@
   class SwitchLayersLayer extends Layer {
     constructor(options) {
       super(options.deck);
-      this.callback = options.callback;
 
       this.hotcuesLayer = new HotCuesLayer(this.group);
       this.beatjumpsLayer = new BeatJumpLayer(this.group);
       this.currentLayerNum = 1;
+    }
+
+    updateLedState() {
+      this.output.clear();
+      this.output.led(this.currentLayerNum, LedValue.ON);      
     }
 
     currentLayer() {
@@ -159,7 +208,7 @@
       console.log("SwitchLayersLayer: pressed pad " + numberPad);
       if (isPressed) {
         this.currentLayerNum = numberPad;
-        this.callback(this.currentLayer());
+        this.updateLedState();
       }
     }
   }
@@ -171,9 +220,6 @@
       this.isSwitchLayerState = false;
       this.switchLayersLayer = new SwitchLayersLayer({
         deck: this.group,
-        callback: function (layer) {
-          console.log("Input: callback change layer to " + layer);
-        },
       });
     }
 
@@ -188,11 +234,26 @@
     }
 
     switchLayerButton(value) {
+      this.output.clear();
       this.isSwitchLayerState = value > 0;
+      if (this.isSwitchLayerState) {
+        this.switchLayersLayer.currentLayer().disconnect();
+        this.switchLayersLayer.connect(this.output);
+        this.switchLayersLayer.updateLedState();
+      } else {
+        this.switchLayersLayer.disconnect();
+        this.switchLayersLayer.currentLayer().connect(this.output);
+        this.switchLayersLayer.currentLayer().updateLedState();
+      }
     };
 
-    shift(channel, control, value, status, group) {
-      this.pressedShift = value > 0;
+    shift() {
+      this.pressedShift = true;
+      this.switchLayersLayer.currentLayer().shift(this.pressedShift);
+    }
+
+    unshift() {
+      this.pressedShift = false;
       this.switchLayersLayer.currentLayer().shift(this.pressedShift);
     }
 
@@ -202,9 +263,7 @@
 
       const isPressed = value > 0;
       if (this.isSwitchLayerState) {
-        this.switchLayersLayer.currentLayer().disconnect();
         this.switchLayersLayer.pad(numPad, isPressed);
-        this.switchLayersLayer.currentLayer().connect(this.output);
       } else {
         this.switchLayersLayer.currentLayer().pad(numPad, isPressed);
       }

@@ -25,6 +25,7 @@
                     <script-binding/>
                 </options>
             </control>
+
             <control>
                 <group>[Channel1]</group>
                 <key>MixtrackPlatinum.octopusPad</key>
@@ -61,6 +62,44 @@
                     <Script-Binding/>
                 </options>
             </control>
+
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x28</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x29</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x2A</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x2B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+
             <control>
                 <group>[Channel1]</group>
                 <key>MixtrackPlatinum.decks[1].pitch.inputLSB</key>
