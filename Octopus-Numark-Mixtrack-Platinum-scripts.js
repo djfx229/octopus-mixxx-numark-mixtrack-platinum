@@ -36,6 +36,23 @@ var MixtrackPlatinum = {};
 MixtrackPlatinum.init = function(id, debug) {
     MixtrackPlatinum.id = id;
     MixtrackPlatinum.debug = debug;
+    MixtrackPlatinum.octopusInput = new octopus.Input(1);
+
+    const mapControlHexToPadNumber = new Map();
+    mapControlHexToPadNumber[0x21] = 1;
+    mapControlHexToPadNumber[0x22] = 2;
+    mapControlHexToPadNumber[0x23] = 3;
+    mapControlHexToPadNumber[0x24] = 4;
+    MixtrackPlatinum.mapControlHexToPadNumber = mapControlHexToPadNumber;
+
+    MixtrackPlatinum.octopusPad = function (channel, control, value, status, group) {
+        const number = MixtrackPlatinum.mapControlHexToPadNumber[control];
+        MixtrackPlatinum.octopusInput.pad(number, value)
+    },
+
+    MixtrackPlatinum.octopusSwitchLayerButton = function (channel, control, value, status, group) {
+        MixtrackPlatinum.octopusInput.switchLayerButton(value)
+    },
 
     // effects
     MixtrackPlatinum.effects = new components.ComponentContainer();
@@ -1238,9 +1255,10 @@ MixtrackPlatinum.scratchEnable = function (deck) {
         Изначально value было 1240.
         Увеличение значения - led индикация отстаёт от реальной позиции джога.
         Уменьшение наоборот, делает индикацию быстрее.
-        Значение зависит от размера аудио буффера, а также того, сколько активных дек сейчас запущено.
+        Значение зависит от размера аудио буффера, устройства вывода, количества активных дек, и похоже ещё от фазы
+        луны и расположения звёзд.
 
-        2 деки, буффер 2.9ms = 1400.
+        SP404MK2 в качестве аудио выхода, 2 деки, буффер 2.9ms = 1400.
     */
 
     engine.scratchEnable(deck, 1400, 33+1/3, alpha, beta);

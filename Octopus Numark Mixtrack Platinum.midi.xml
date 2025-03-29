@@ -11,9 +11,56 @@
         <scriptfiles>
             <file filename="lodash.mixxx.js"/>
             <file filename="midi-components-0.0.js"/>
+            <file filename="octopus.js"/>
             <file functionprefix="MixtrackPlatinum" filename="Octopus-Numark-Mixtrack-Platinum-scripts.js"/>
         </scriptfiles>
         <controls>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusSwitchLayerButton</key>
+                <description>wheel button to toggle vinyl mode</description>
+                <status>0x90</status>
+                <midino>0x07</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x21</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x22</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x23</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x9F</status>
+                <midino>0x24</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
             <control>
                 <group>[Channel1]</group>
                 <key>MixtrackPlatinum.decks[1].pitch.inputLSB</key>
@@ -1230,16 +1277,6 @@
                 <description>Fires when a deck is activated.</description>
                 <status>0x90</status>
                 <midino>0x08</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.wheelToggle</key>
-                <description>wheel button to toggle vinyl mode</description>
-                <status>0x90</status>
-                <midino>0x07</midino>
                 <options>
                     <script-binding/>
                 </options>
