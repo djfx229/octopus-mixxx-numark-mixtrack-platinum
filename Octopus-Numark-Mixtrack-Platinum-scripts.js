@@ -15,34 +15,78 @@
 // should wheel be enabled on startup?
 var EnableWheel = true;
 
-// should we use the manual loop buttons as hotcue buttons 5-8?
-var UseManualLoopAsCue = false;
-
-// should we use the auto loop buttons as hotcue buttons 5-8?
-var UseAutoLoopAsCue = true;
-
 // should shift+load eject or load and play?
 var ShiftLoadEjects = false;
 
 // should we show effect parameters when an effect is focused?
 var ShowFocusedEffectParameters = false;
 
+class PadMapper {
+    constructor() {
+        const row1SpmUnshift = new Map();
+        row1SpmUnshift[0x21] = 1;
+        row1SpmUnshift[0x22] = 2;
+        row1SpmUnshift[0x23] = 3;
+        row1SpmUnshift[0x24] = 4;
+
+        const row1SpmShift = new Map();
+        row1SpmShift[0x28] = 1;
+        row1SpmShift[0x29] = 2;
+        row1SpmShift[0x2A] = 3;
+        row1SpmShift[0x2B] = 4;
+
+        const row2CpmUnshift = new Map();
+        row2CpmUnshift[0x18] = 5;
+        row2CpmUnshift[0x19] = 6;
+        row2CpmUnshift[0x1A] = 7;
+        row2CpmUnshift[0x1B] = 8;
+
+        const row2CpmShift = new Map();
+        row2CpmShift[0x20] = 5;
+        row2CpmShift[0x21] = 6;
+        row2CpmShift[0x22] = 7;
+        row2CpmShift[0x23] = 8;
+
+        const mapPadToLedHex = new Map();
+        mapPadToLedHex[1] = [0x21, 0x28];
+        mapPadToLedHex[2] = [0x22, 0x29];
+        mapPadToLedHex[3] = [0x23, 0x2A];
+        mapPadToLedHex[4] = [0x24, 0x2B];
+        mapPadToLedHex[5] = [0x18, 0x20];
+        mapPadToLedHex[6] = [0x19, 0x21];
+        mapPadToLedHex[7] = [0x1A, 0x22];
+        mapPadToLedHex[8] = [0x1B, 0x23];
+
+        this.row1SpmUnshift = row1SpmUnshift;
+        this.row1SpmShift = row1SpmShift;
+        this.row2CpmUnshift = row2CpmUnshift;
+        this.row2CpmShift = row2CpmShift;
+        this.mapPadToLedHex = mapPadToLedHex;
+      }
+
+    midiToPad(control, channel, isShift) {
+        let map;
+        if (channel == "0x0F") {
+            map = isShift ? this.row1SpmShift : this.row1SpmUnshift;
+        } else if (channel == "0x04") {
+            map =  isShift ? this.row2CpmShift : this.row2CpmUnshift;
+        }
+        return map[control]
+    }
+}
 
 var MixtrackPlatinum = {};
 
 MixtrackPlatinum.init = function (id, debug) {
     MixtrackPlatinum.id = id;
     MixtrackPlatinum.debug = debug;
-
-    const mapPadToLedHex = new Map();
-    mapPadToLedHex[1] = [0x21, 0x28];
-    mapPadToLedHex[2] = [0x22, 0x29];
-    mapPadToLedHex[3] = [0x23, 0x2A];
-    mapPadToLedHex[4] = [0x24, 0x2B];
+    MixtrackPlatinum.padMapper = new PadMapper();
 
     MixtrackPlatinum.octopusOutput = new octopus.DeviceOutput({
-        midiChannel: 0x0F,
-        mapPadToLedHex: mapPadToLedHex,
+        getMidiChannel: function(numberPad) {
+            return numberPad < 5 ? 0x0F : 0x04;
+        },
+        mapPadToLedHex: MixtrackPlatinum.padMapper.mapPadToLedHex,
     });
 
     MixtrackPlatinum.octopusInput = new octopus.Input({
@@ -50,21 +94,8 @@ MixtrackPlatinum.init = function (id, debug) {
     });
     MixtrackPlatinum.octopusInput.connect(MixtrackPlatinum.octopusOutput);
 
-    const mapControlHexToPadNumber = new Map();
-    // row 1 from sampler pad mode, unshift
-    mapControlHexToPadNumber[0x21] = 1;
-    mapControlHexToPadNumber[0x22] = 2;
-    mapControlHexToPadNumber[0x23] = 3;
-    mapControlHexToPadNumber[0x24] = 4;
-    // row 1 from sampler pad mode, shift
-    mapControlHexToPadNumber[0x28] = 1;
-    mapControlHexToPadNumber[0x29] = 2;
-    mapControlHexToPadNumber[0x2A] = 3;
-    mapControlHexToPadNumber[0x2B] = 4;
-    MixtrackPlatinum.mapControlHexToPadNumber = mapControlHexToPadNumber;
-
     MixtrackPlatinum.octopusPad = function (channel, control, value, status, group) {
-        const number = MixtrackPlatinum.mapControlHexToPadNumber[control];
+        const number = MixtrackPlatinum.padMapper.midiToPad(control, channel, MixtrackPlatinum.shift)
         MixtrackPlatinum.octopusInput.pad(number, value)
     },
 
@@ -585,18 +616,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
         },
     });
 
-    this.hotcue_buttons = new components.ComponentContainer();
-    for (var i = 1; i <= 4; ++i) {
-        this.hotcue_buttons[i] = new components.HotcueButton({
-            midi: [0x94 + midi_chan, 0x18 + i - 1],
-            number: i,
-            sendShifted: true,
-            shiftControl: true,
-            shiftOffset: 8,
-        });
-    }
-    this.hotcues = this.hotcue_buttons;
-
     this.pitch = new components.Pot({
         inKey: 'rate',
         invert: true,
@@ -660,27 +679,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
         }, obj);
     };
 
-    this.alternate_manloop = new components.ComponentContainer({
-        loop_in: new components.HotcueButton(loop_base(0x38, {
-            number: 5,
-        })),
-        loop_out: new components.HotcueButton(loop_base(0x39, {
-            number: 6,
-        })),
-        loop_toggle: new components.HotcueButton(loop_base(0x32, {
-            number: 7,
-        })),
-        // there are two hotcue 8 controls, one for the loop_halve button and
-        // one for the loop_double button. These buttons are two individual
-        // functions when in manual loop mode, but they behave as one button
-        // in hotcue mode.
-        loop_halve: new components.HotcueButton(loop_base(0x34, {
-            number: 8,
-        })),
-        loop_double: new components.HotcueButton(loop_base(0x35, {
-            number: 8,
-        })),
-    });
     this.normal_manloop = new components.ComponentContainer({
         loop_in: new components.Button(loop_base(0x38, {
             inKey: 'loop_in',
@@ -714,12 +712,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
             },
         })),
     });
-    // swap normal and alternate manual loop controls
-    if (UseManualLoopAsCue) {
-        var manloop = this.normal_manloop;
-        this.normal_manloop = this.alternate_manloop;
-        this.alternate_manloop = manloop;
-    }
     this.manloop = this.normal_manloop;
 
     auto_loop_hotcue = function(midino, obj) {
@@ -741,25 +733,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
             shiftOffset: -0x10,
         }, obj);
     };
-
-    this.alternate_autoloop = new components.ComponentContainer({
-        auto1: new components.HotcueButton(auto_loop_hotcue(0x14, {
-            number: 5,
-        })),
-        auto2: new components.HotcueButton(auto_loop_hotcue(0x15, {
-            number: 6,
-        })),
-        auto3: new components.HotcueButton(auto_loop_hotcue(0x16, {
-            number: 7,
-        })),
-        auto4: new components.HotcueButton(auto_loop_hotcue(0x17, {
-            number: 8,
-        })),
-    });
-    this.alternate_autoloop.roll1 = this.alternate_autoloop.auto1;
-    this.alternate_autoloop.roll2 = this.alternate_autoloop.auto2;
-    this.alternate_autoloop.roll3 = this.alternate_autoloop.auto3;
-    this.alternate_autoloop.roll4 = this.alternate_autoloop.auto4;
 
     this.normal_autoloop = new components.ComponentContainer({
         auto1: new components.Button(auto_loop_base(0x14, {
@@ -797,12 +770,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
         })),
     });
 
-    // swap normal and alternate auto loop controls
-    if (UseAutoLoopAsCue) {
-        var autoloop = this.normal_autoloop;
-        this.normal_autoloop = this.alternate_autoloop;
-        this.alternate_autoloop = autoloop;
-    }
     this.autoloop = this.normal_autoloop;
 
     this.pad_mode = new components.Component({
@@ -810,38 +777,12 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
             // only handle button down events
             if (value != 0x7F) return;
 
-            var normal_hotcues = deck.hotcue_buttons;
-
             // if shifted, set a special mode
             if (this.isShifted) {
-                // manual loop
-                if (control == 0x0E) {
-                    deck.manloop = deck.alternate_manloop;
-                    deck.manloop.reconnectComponents();
-                }
                 // auto loop
-                else if (control == 0x06) {
+                if (control == 0x06) {
                     deck.autoloop = deck.alternate_autoloop;
                     deck.autoloop.reconnectComponents();
-                }
-
-                // hotcue sampler
-                if (control == 0x0B) {
-                    // данный блок понадобится чтобы делать включение и выключение octopus 
-                    // при смене pad mode на контроллере
-                    deck.hotcues.forEachComponent(function(component) {
-                        component.disconnect();
-                    });
-                    deck.hotcues.reconnectComponents();
-                }
-
-                // reset hotcues in all other modes
-                else {
-                    deck.hotcues.forEachComponent(function(component) {
-                        component.disconnect();
-                    });
-                    deck.hotcues = deck.hotcue_buttons;
-                    deck.hotcues.reconnectComponents();
                 }
             }
             // otherwise set a normal mode
@@ -855,23 +796,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
                 else if (control == 0x06) {
                     deck.autoloop = deck.normal_autoloop;
                     deck.autoloop.reconnectComponents();
-                }
-
-                // hotcue sampler
-                if (control == 0x0B) {
-                    deck.hotcues.forEachComponent(function(component) {
-                        component.disconnect();
-                    });
-                    deck.hotcues = normal_hotcues;
-                    deck.hotcues.reconnectComponents();
-                }
-                // reset hotcues
-                else {
-                    deck.hotcues.forEachComponent(function(component) {
-                        component.disconnect();
-                    });
-                    deck.hotcues = deck.hotcue_buttons;
-                    deck.hotcues.reconnectComponents();
                 }
             }
         },

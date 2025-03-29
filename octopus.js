@@ -38,13 +38,13 @@
   
   /**
    * @param options Object содержащий в себе:
-   * midiChannel - номер канала
+   * midiChannelCallback - функций принимающая номер пада, и возвращающая для него номер канала
    * mapPadToLedHex - карта сопоставляющая номер пада с его midino кодом.
    */
   class DeviceOutput extends Output {
     constructor(options) {
       super();
-      this.midiChannel = options.midiChannel;
+      this.getMidiChannel = options.getMidiChannel;
       this.mapPadToLedHex = options.mapPadToLedHex;
     }
 
@@ -53,13 +53,13 @@
       console.log("DeviceOutput: led() midinoArray=" + midinoArray + ", numberPad=" + numberPad + " , value=" + value + " ");
 
       midinoArray.forEach((midino) => {
-        midi.sendShortMsg(0x90 | this.midiChannel, midino, value);
+        midi.sendShortMsg(0x90 | this.getMidiChannel(numberPad), midino, value);
       })
     }
 
     clear() {
       console.log("DeviceOutput: clear()");
-      for (let number = 1; number <= 4; number++) {
+      for (let number = 1; number <= 8; number++) {
         this.led(number, LedValue.OFF);
       }
     }
@@ -118,13 +118,28 @@
         jump: 4,
         direction: "_forward",
       };
+      this.mapPadToAction[5] = {
+        jump: 16,
+        direction: "_backward",
+      };
+      this.mapPadToAction[6] = {
+        jump: 16,
+        direction: "_forward",
+      };
+      this.mapPadToAction[7] = {
+        jump: 32,
+        direction: "_backward",
+      };
+      this.mapPadToAction[8] = {
+        jump: 32,
+        direction: "_forward",
+      };
     }
 
     updateLedState() {
-      this.output.led(1, LedValue.OFF);
-      this.output.led(2, LedValue.ON);
-      this.output.led(3, LedValue.OFF);
-      this.output.led(4, LedValue.ON);      
+      for (let number = 1; number <= 8; number++) {
+        this.output.led(number, number % 2 == 1 ? 0x03 : LedValue.ON);
+      }
     }
 
     pad(numberPad, isPressed) {
@@ -138,13 +153,29 @@
     }
   }
 
+  /**
+   * Расположение hotcue отличается от номерации в Layer!
+   * [5][6][7][8]
+   * [1][2][3][4].
+   */
   class HotCuesLayer extends Layer {
     constructor(group) {
       super(group);
 
+      const mapPadToHotCue = new Map();
+      mapPadToHotCue[1] = [5];
+      mapPadToHotCue[2] = [6];
+      mapPadToHotCue[3] = [7];
+      mapPadToHotCue[4] = [8];
+      mapPadToHotCue[5] = [1];
+      mapPadToHotCue[6] = [2];
+      mapPadToHotCue[7] = [3];
+      mapPadToHotCue[8] = [4];
+      this.mapPadToHotCue = mapPadToHotCue;
+
       this.connections = new Map();
 
-      for (let number = 1; number <= 4; number++) {
+      for (let number = 1; number <= 8; number++) {
         this.connections[number] = this.connection(number);
       }
     }
@@ -152,7 +183,7 @@
     connection(number) {
       const callback = function(value, group, control) {
         console.log("HotCuesLayer: testing makeConnection number=" + number + ", value=" + value + ", control=" + control);
-        this.output.led(number, value == 0 ? LedValue.OFF : LedValue.ON);
+        this.output.led(this.mapPadToHotCue[number], value == 0 ? LedValue.OFF : LedValue.ON);
       };
 
       return engine.makeConnection(
@@ -163,7 +194,7 @@
     }
 
     updateLedState() {
-      for (let number = 1; number <= 4; number++) {
+      for (let number = 1; number <= 8; number++) {
         this.connections[number].trigger();
       }
     }
@@ -172,7 +203,7 @@
       console.log("HotCuesLayer: pressed pad " + numberPad);
 
       const operation = this.pressedShift ? "_clear" : "_activate";
-      const key = "hotcue_" + numberPad + operation;
+      const key = "hotcue_" + this.mapPadToHotCue[numberPad] + operation;
       engine.setValue(this.group, key, isPressed ? 1.0 : 0.0);
     }
   }

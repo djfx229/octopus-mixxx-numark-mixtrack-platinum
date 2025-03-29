@@ -102,6 +102,80 @@
 
             <control>
                 <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x18</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x19</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x1A</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x1B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x20</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x21</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x22</midino>
+                <options>
+                    <Script-Binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>MixtrackPlatinum.octopusPad</key>
+                <status>0x94</status>
+                <midino>0x23</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+
+            <control>
+                <group>[Channel1]</group>
                 <key>MixtrackPlatinum.decks[1].pitch.inputLSB</key>
                 <description>pitch fader lsb</description>
                 <status>0xB0</status>
@@ -372,123 +446,6 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[4].input</key>
-                <status>0x94</status>
-                <midino>0x23</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[4].input</key>
-                <status>0x95</status>
-                <midino>0x23</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[3].input</key>
-                <status>0x94</status>
-                <midino>0x22</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[4].input</key>
-                <status>0x96</status>
-                <midino>0x23</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[3].input</key>
-                <status>0x95</status>
-                <midino>0x22</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[2].input</key>
-                <status>0x94</status>
-                <midino>0x21</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[4].input</key>
-                <status>0x97</status>
-                <midino>0x23</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[3].input</key>
-                <status>0x96</status>
-                <midino>0x22</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[2].input</key>
-                <status>0x95</status>
-                <midino>0x21</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[1].input</key>
-                <status>0x94</status>
-                <midino>0x20</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[3].input</key>
-                <status>0x97</status>
-                <midino>0x22</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[2].input</key>
-                <status>0x96</status>
-                <midino>0x21</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[1].input</key>
-                <status>0x95</status>
-                <midino>0x20</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
                 <key>MixtrackPlatinum.decks[1].autoloop.roll4.input</key>
                 <status>0x94</status>
                 <midino>0x1F</midino>
@@ -501,24 +458,6 @@
                 <key>MixtrackPlatinum.decks[1].pfl_button.input</key>
                 <status>0x90</status>
                 <midino>0x1B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[2].input</key>
-                <status>0x97</status>
-                <midino>0x21</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[1].input</key>
-                <status>0x96</status>
-                <midino>0x20</midino>
                 <options>
                     <script-binding/>
                 </options>
@@ -546,15 +485,6 @@
                 <key>MixtrackPlatinum.decks[2].pfl_button.input</key>
                 <status>0x91</status>
                 <midino>0x1B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[1].input</key>
-                <status>0x97</status>
-                <midino>0x20</midino>
                 <options>
                     <script-binding/>
                 </options>
@@ -688,15 +618,6 @@
                 </options>
             </control>
             <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[4].input</key>
-                <status>0x94</status>
-                <midino>0x1B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel3]</group>
                 <key>MixtrackPlatinum.deckSwitch</key>
                 <description>Fires when a deck is disabled.</description>
@@ -725,24 +646,6 @@
                 </options>
             </control>
             <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[4].input</key>
-                <status>0x95</status>
-                <midino>0x1B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[3].input</key>
-                <status>0x94</status>
-                <midino>0x1A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel4]</group>
                 <key>MixtrackPlatinum.deckSwitch</key>
                 <description>Fires when a deck is disabled.</description>
@@ -761,119 +664,12 @@
                     <script-binding/>
                 </options>
             </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[4].input</key>
-                <status>0x96</status>
-                <midino>0x1B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[3].input</key>
-                <status>0x95</status>
-                <midino>0x1A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[2].input</key>
-                <status>0x94</status>
-                <midino>0x19</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>MixtrackPlatinum.decks[1].hotcues[1].input</key>
-                <status>0x94</status>
-                <midino>0x18</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[4].input</key>
-                <status>0x97</status>
-                <midino>0x1B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[3].input</key>
-                <status>0x96</status>
-                <midino>0x1A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[2].input</key>
-                <status>0x95</status>
-                <midino>0x19</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[2].input</key>
-                <status>0x96</status>
-                <midino>0x19</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>MixtrackPlatinum.decks[2].hotcues[1].input</key>
-                <status>0x95</status>
-                <midino>0x18</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
+            
             <control>
                 <group>[Channel1]</group>
                 <key>MixtrackPlatinum.decks[1].autoloop.auto4.input</key>
                 <status>0x94</status>
                 <midino>0x17</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[3].input</key>
-                <status>0x97</status>
-                <midino>0x1A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[2].input</key>
-                <status>0x97</status>
-                <midino>0x19</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>MixtrackPlatinum.decks[3].hotcues[1].input</key>
-                <status>0x96</status>
-                <midino>0x18</midino>
                 <options>
                     <script-binding/>
                 </options>
@@ -892,15 +688,6 @@
                 <key>MixtrackPlatinum.decks[1].autoloop.auto3.input</key>
                 <status>0x94</status>
                 <midino>0x16</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>MixtrackPlatinum.decks[4].hotcues[1].input</key>
-                <status>0x97</status>
-                <midino>0x18</midino>
                 <options>
                     <script-binding/>
                 </options>
