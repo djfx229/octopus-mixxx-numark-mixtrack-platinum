@@ -21,9 +21,6 @@ var UseManualLoopAsCue = false;
 // should we use the auto loop buttons as hotcue buttons 5-8?
 var UseAutoLoopAsCue = true;
 
-// should we use the hotcue buttons for samplers 5-8?
-var UseCueAsSampler = false;
-
 // should shift+load eject or load and play?
 var ShiftLoadEjects = false;
 
@@ -66,22 +63,8 @@ MixtrackPlatinum.init = function(id, debug) {
     MixtrackPlatinum.decks[3] = new MixtrackPlatinum.Deck(3, 0x02, MixtrackPlatinum.effects[1]);
     MixtrackPlatinum.decks[4] = new MixtrackPlatinum.Deck(4, 0x03, MixtrackPlatinum.effects[2]);
 
-    // set up two banks of samplers, 4 samplers each
-    if (engine.getValue("[App]", "num_samplers") < 8) {
-        engine.setValue("[App]", "num_samplers", 8);
-    }
-    MixtrackPlatinum.sampler_all = new components.ComponentContainer();
-    MixtrackPlatinum.sampler_all[1] = new MixtrackPlatinum.Sampler(1);
-    MixtrackPlatinum.sampler_all[2] = new MixtrackPlatinum.Sampler(5);
-
-    MixtrackPlatinum.sampler = MixtrackPlatinum.sampler_all[1];
-    MixtrackPlatinum.sampler_all[2].forEachComponent(function(component) {
-        component.disconnect();
-    });
-
-
     // headphone gain
-    MixtrackPlatinum.head_gain = new MixtrackPlatinum.HeadGain(MixtrackPlatinum.sampler_all);
+    MixtrackPlatinum.head_gain = new MixtrackPlatinum.HeadGain();
 
     // exit demo mode
     var byteArray = [0xF0, 0x00, 0x01, 0x3F, 0x7F, 0x3A, 0x60, 0x00, 0x04, 0x04, 0x01, 0x00, 0x00, 0xF7];
@@ -218,12 +201,6 @@ MixtrackPlatinum.shutdown = function() {
     midi.sendShortMsg(0x99, 0x00, 0x01);
     midi.sendShortMsg(0x99, 0x01, 0x01);
     midi.sendShortMsg(0x99, 0x02, 0x01);
-
-    // turn off sampler leds
-    midi.sendShortMsg(0x8F, 0x21, 0x00);
-    midi.sendShortMsg(0x8F, 0x22, 0x00);
-    midi.sendShortMsg(0x8F, 0x23, 0x00);
-    midi.sendShortMsg(0x8F, 0x24, 0x00);
 
     // zero vu meters
     midi.sendShortMsg(0xBF, 0x44, 0);
@@ -588,7 +565,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
     });
 
     this.hotcue_buttons = new components.ComponentContainer();
-    this.sampler_buttons = new components.ComponentContainer();
     for (var i = 1; i <= 4; ++i) {
         this.hotcue_buttons[i] = new components.HotcueButton({
             midi: [0x94 + midi_chan, 0x18 + i - 1],
@@ -596,17 +572,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
             sendShifted: true,
             shiftControl: true,
             shiftOffset: 8,
-        });
-
-        // sampler buttons 5-8
-        this.sampler_buttons[i] = new components.SamplerButton({
-            midi: [0x94 + midi_chan, 0x18 + i - 1],
-            sendShifted: true,
-            shiftControl: true,
-            shiftOffset: 8,
-            number: i+4,
-            loaded: 0x00,
-            playing: 0x7F,
         });
     }
     this.hotcues = this.hotcue_buttons;
@@ -824,12 +789,7 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
             // only handle button down events
             if (value != 0x7F) return;
 
-            var shifted_hotcues = deck.sampler_buttons;
             var normal_hotcues = deck.hotcue_buttons;
-            if (UseCueAsSampler) {
-                shifted_hotcues = deck.hotcue_buttons;
-                normal_hotcues = deck.sampler_buttons;
-            }
 
             // if shifted, set a special mode
             if (this.isShifted) {
@@ -846,12 +806,14 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
 
                 // hotcue sampler
                 if (control == 0x0B) {
+                    // данный блок понадобится чтобы делать включение и выключение octopus 
+                    // при смене pad mode на контроллере
                     deck.hotcues.forEachComponent(function(component) {
                         component.disconnect();
                     });
-                    deck.hotcues = shifted_hotcues;
                     deck.hotcues.reconnectComponents();
                 }
+
                 // reset hotcues in all other modes
                 else {
                     deck.hotcues.forEachComponent(function(component) {
@@ -992,11 +954,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
         }
     });
 
-    // don't light up sampler buttons in hotcue mode
-    this.sampler_buttons.forEachComponent(function(component) {
-        component.disconnect();
-    });
-
     this.setActive = function(active) {
         this.active = active;
 
@@ -1009,66 +966,14 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
 
 MixtrackPlatinum.Deck.prototype = new components.Deck();
 
-MixtrackPlatinum.Sampler = function(base) {
-    for (var i = 1; i <= 4; ++i) {
-        this[i] = new components.SamplerButton({
-            midi: [0x9F, 0x20 + i],
-            number: base+i-1,
-            loaded: 0x00,
-            playing: 0x7F,
-        });
-    }
-};
-
-MixtrackPlatinum.Sampler.prototype = new components.ComponentContainer();
-
-MixtrackPlatinum.HeadGain = function(sampler) {
+MixtrackPlatinum.HeadGain = function() {
     components.Pot.call(this);
-
-    this.ignore_next = null;
-    this.shifted = false;
-    this.sampler = sampler;
-    this.sampler.forEachComponent(function(component) {
-        engine.softTakeover(component.group, 'volume', true);
-    });
 };
 MixtrackPlatinum.HeadGain.prototype = new components.Pot({
     group: '[Main]',
     inKey: 'headGain',
     input: function (channel, control, value, status, group) {
-        // we call softTakeoverIgnoreNextValue() here on the non-targeted
-        // control only if the control was moved when focus was switched. This
-        // is to avoid a phantom triggering of soft takeover that can happen if
-        // ignoreNextValue() is called un-conditionally when the control target
-        // is changed (like in shift()/unshift()).
-        if (this.ignore_next == "sampler" && !this.shifted) {
-            this.sampler.forEachComponent(function(component) {
-                engine.softTakeoverIgnoreNextValue(component.group, 'volume');
-            });
-            this.ignore_next = null;
-        }
-        else if (this.ignore_next == "headgain" && this.shifted) {
-            engine.softTakeoverIgnoreNextValue(this.group, this.inKey);
-            this.ignore_next = null;
-        }
-
-        if (this.shifted) {
-            // make head gain control the sampler volume when shifted
-            var pot = this;
-            this.sampler.forEachComponent(function(component) {
-                engine.setParameter(component.group, 'volume', pot.inValueScale(value));
-            });
-        } else {
-            components.Pot.prototype.input.call(this, channel, control, value, status, group);
-        }
-    },
-    shift: function() {
-        this.shifted = true;
-        this.ignore_next = "headgain";
-    },
-    unshift: function() {
-        this.shifted = false;
-        this.ignore_next = "sampler";
+        components.Pot.prototype.input.call(this, channel, control, value, status, group);
     },
 });
 
@@ -1463,7 +1368,6 @@ MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group)
 
     if (MixtrackPlatinum.shift) {
         MixtrackPlatinum.decks.shift();
-        MixtrackPlatinum.sampler_all.shift();
         MixtrackPlatinum.effects.shift();
         MixtrackPlatinum.browse.shift();
         MixtrackPlatinum.head_gain.shift();
@@ -1476,7 +1380,6 @@ MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group)
     }
     else {
         MixtrackPlatinum.decks.unshift();
-        MixtrackPlatinum.sampler_all.unshift();
         MixtrackPlatinum.effects.unshift();
         MixtrackPlatinum.browse.unshift();
         MixtrackPlatinum.head_gain.unshift();
