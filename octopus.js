@@ -3,13 +3,47 @@
  */
 
 (function (global) {
-  class Output {
-    constructor(group) {
-      this.group = group;
+
+  class LedValue {
+    static get ON() {
+      return 0x7F;
     }
 
-    led(numberPad, isEnable) {
-      console.log("Output: led numberPad=" + numberPad + " , isEnable=" + isEnable + " ");
+    static get OFF() {
+      return 0x00;
+    }
+  }
+
+  class Output {
+    constructor() { }
+
+    led(numberPad, value) {
+      console.log("Output: led numberPad=" + numberPad + " , value=" + value + " ");
+    }
+  }
+
+  class EmptyOutput extends Output {
+    constructor() {
+      super();
+    }
+
+    led(numberPad, value) {
+      console.log("EmptyOutput: led numberPad=" + numberPad + " , value=" + value + " ");
+    }
+  }
+
+  class DeviceOutput extends Output {
+    constructor(options) {
+      super();
+      this.midiChannel = options.midiChannel;
+      this.mapPadToLedHex = options.mapPadToLedHex;
+    }
+
+    led(numberPad, value) {
+      const midino = this.mapPadToLedHex[numberPad];
+      console.log("DeviceOutput: led() midino=" + midino + ", numberPad=" + numberPad + " , value=" + value + " ");
+
+      midi.sendShortMsg(0x90 | this.midiChannel, midino, value);
     }
   }
 
@@ -21,8 +55,16 @@
   class Layer {
     constructor(group) {
       this.group = group;
-      this.output = new Output(group);
+      this.output = new EmptyOutput();
       this.pressedShift = false;
+    }
+
+    connect(output) {
+      this.output = output;
+    }
+
+    disconnect() {
+      this.output = new EmptyOutput();
     }
 
     pad(numberPad, isPressed) {
@@ -70,7 +112,7 @@
 
     shift(isPressed) {
       super.shift(isPressed);
-      this.output.led(1, false);
+      this.output.led(1, LedValue.OFF);
     }
   }
 
@@ -81,6 +123,8 @@
 
     pad(numberPad, isPressed) {
       console.log("HotCuesLayer: pressed pad " + numberPad);
+
+      this.output.led(numberPad, isPressed ? LedValue.ON : LedValue.OFF);
 
       const operation = this.pressedShift ? "_clear" : "_activate";
       const key = "hotcue_" + numberPad + operation;
@@ -121,9 +165,9 @@
   }
 
   class Input {
-    constructor(group) {
-      this.group = group;
-      this.output = new Output(group);
+    constructor(options) {
+      this.group = options.group;
+      this.output = new EmptyOutput();
       this.isSwitchLayerState = false;
       this.switchLayersLayer = new SwitchLayersLayer({
         deck: this.group,
@@ -131,6 +175,16 @@
           console.log("Input: callback change layer to " + layer);
         },
       });
+    }
+
+    connect(output) {
+      this.output = output;
+      this.switchLayersLayer.currentLayer().connect(this.output);
+    }
+
+    disconnect() {
+      this.output = new EmptyOutput();
+      this.switchLayersLayer.currentLayer().disconnect()
     }
 
     switchLayerButton(value) {
@@ -142,40 +196,26 @@
       this.switchLayersLayer.currentLayer().shift(this.pressedShift);
     }
 
-
     pad(numPad, value) {
       console.log("Input: pressed pad " + numPad);
       console.log("Input: current layer " + this.switchLayersLayer.currentLayer());
 
       const isPressed = value > 0;
       if (this.isSwitchLayerState) {
+        this.switchLayersLayer.currentLayer().disconnect();
         this.switchLayersLayer.pad(numPad, isPressed);
-        this.switchLayersLayer.currentLayer().output = this.output;
+        this.switchLayersLayer.currentLayer().connect(this.output);
       } else {
         this.switchLayersLayer.currentLayer().pad(numPad, isPressed);
       }
-    }
-
-    /*
-    Вообще я хотел создать массив pads, и через цикл задать коллбеки с нужными индексами
-    Чтобы такой копипаст не писать, но столкнулся с тем, что внутри функции, которая присвоена как
-    элемент массива, нельзя вызывать функцию из класса, при том что просто из конструктора я спокойно
-    могу обращаться к таким функциям.
-    */
-
-    pad1(channel, control, value, status, group) {
-      this.pad(1, value);
-    }
-
-    pad2(channel, control, value, status, group) {
-      this.pad(2, value);
     }
   }
 
   // Экспортируем классы в глобальный объект
   const exports = {};
   exports.Input = Input;
-  exports.Output = Output;
+  // private exports.Output = Output;
+  exports.DeviceOutput = DeviceOutput;
   // private exports.Layer = Layer;
   // private exports.SwitchLayersLayer = SwitchLayersLayer;
   exports.BeatJumpLayer = BeatJumpLayer;

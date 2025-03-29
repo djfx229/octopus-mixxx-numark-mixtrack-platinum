@@ -30,10 +30,25 @@ var ShowFocusedEffectParameters = false;
 
 var MixtrackPlatinum = {};
 
-MixtrackPlatinum.init = function(id, debug) {
+MixtrackPlatinum.init = function (id, debug) {
     MixtrackPlatinum.id = id;
     MixtrackPlatinum.debug = debug;
-    MixtrackPlatinum.octopusInput = new octopus.Input("[Channel1]");
+
+    const mapPadToLedHex = new Map();
+    mapPadToLedHex[1] = 0x21;
+    mapPadToLedHex[2] = 0x22;
+    mapPadToLedHex[3] = 0x23;
+    mapPadToLedHex[4] = 0x24;
+
+    MixtrackPlatinum.octopusOutput = new octopus.DeviceOutput({
+        midiChannel: 0x0F,
+        mapPadToLedHex: mapPadToLedHex,
+    });
+
+    MixtrackPlatinum.octopusInput = new octopus.Input({
+        group: "[Channel1]",
+    });
+    MixtrackPlatinum.octopusInput.connect(MixtrackPlatinum.octopusOutput);
 
     const mapControlHexToPadNumber = new Map();
     mapControlHexToPadNumber[0x21] = 1;
