@@ -42,7 +42,7 @@
       console.log("EmptyOutput: led numberPad=" + numberPad + " , value=" + value + " ");
     }
   }
-  
+
   /**
    * Для создания объекта связывающего пад с его реальным midi сообщением.
    * 
@@ -84,12 +84,12 @@
       // console.log("DeviceOutput: led numberPad=" + numberPad + " , value=" + value + " ");
       const address = this.requestPadAddress(this.group, numberPad);
       // console.log("DeviceOutput: led address.midinoArray=" + address.midinoArray + " , address.channel=" + address.channel + " ");
-      
+
       if (address instanceof MidiAddress) {
         address.midinoArray.forEach((midino) => {
           const status = 0x90 | address.channel;
           // console.log("DeviceOutput: led midinoArray.forEach status=" + formatToHex(status) + " , midino=" + formatToHex(midino) + " ");
-          
+
           midi.sendShortMsg(status, midino, value);
         })
       }
@@ -124,7 +124,7 @@
       this.output = new EmptyOutput();
     }
 
-    updateLedState() {}
+    updateLedState() { }
 
     pad(numberPad, isPressed) {
       console.log("Layer: pressed pad " + numberPad);
@@ -191,6 +191,97 @@
     }
   }
 
+  class AutoLoopLayer extends Layer {
+    constructor(group) {
+      super(group);
+
+      const mapPadToKey = new Map();
+      mapPadToKey[1] = 1;
+      mapPadToKey[2] = 2;
+      mapPadToKey[3] = 4;
+      mapPadToKey[4] = 8;
+      mapPadToKey[5] = 16;
+      mapPadToKey[6] = 32;
+      this.mapPadToKey = mapPadToKey;
+
+      const mapShiftedPadToKey = new Map();
+      mapShiftedPadToKey[1] = 1 / 1;
+      mapShiftedPadToKey[2] = 1 / 2;
+      mapShiftedPadToKey[3] = 1 / 4;
+      mapShiftedPadToKey[4] = 1 / 8;
+      mapShiftedPadToKey[5] = 1 / 16;
+      mapShiftedPadToKey[6] = 1 / 32;
+      this.mapShiftedPadToKey = mapShiftedPadToKey;
+    }
+
+    updateLedState() {
+      for (let number = 1; number <= 8; number++) {
+        this.output.led(number, number < 7 ? LedValue.ON : 0x01);
+      }
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-beatloop_X_toggle
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-loop_halve
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-loop_double
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-reloop_toggle
+     */
+    pad(numberPad, isPressed) {
+      if (isPressed) {
+        if (numberPad < 7) {
+          console.log("AutoLoopLayer: pad() numberPad=" + numberPad);
+          const value = this.pressedShift ? this.mapShiftedPadToKey[numberPad] : this.mapPadToKey[numberPad];
+          const isEnabled = engine.getValue(this.group, "beatloop_" + value + "_enabled");
+
+          const key = "beatloop_" + value + (isEnabled ? "_toggle" : "_activate");
+          engine.setValue(this.group, key, 1.0);
+        } else if (numberPad == 7) {
+          engine.setValue(this.group, this.pressedShift ? "reloop_toggle" : "loop_halve", 1.0);
+        } else if (numberPad == 8) {
+          engine.setValue(this.group, this.pressedShift ? "reloop_toggle" : "loop_double", 1.0);
+        }
+      }
+    }
+  }
+
+  class PerfomanceLayer extends Layer {
+    constructor(group) {
+      super(group);
+      this.deck = 1; // script.deckFromGroup(this.group);
+      this.factor = 0.5;
+    }
+
+    updateLedState() {
+      for (let number = 1; number <= 8; number++) {
+        this.output.led(number, LedValue.ON);
+      }
+    }
+
+    pad(numberPad, isPressed) {
+      console.log("PerfomanceLayer: pad() numberPad=" + numberPad);
+      switch (numberPad) {
+        case 8:
+          this.break(isPressed);
+          break;
+      }
+    }
+
+    /**
+     * https://github.com/mixxxdj/mixxx/wiki/midi%20scripting#spinback-brake-and-soft-start-effect
+     */
+    break(isPressed) {
+      console.log("PerfomanceLayer: break() isPressed=" + isPressed);
+      // engine.softStart(this.deck, isPressed, 2.0);
+      engine.brake(this.deck, isPressed, 1.0);
+
+      // if (activate) { // act on button press
+      //     engine.brake(deck, true); // slow down the track
+      // } else { // act on button release
+      //     engine.softStart(deck, true);
+      // }
+    }
+  }
+
   /**
    * Расположение hotcue отличается от номерации в Layer!
    * [5][6][7][8]
@@ -201,14 +292,14 @@
       super(group);
 
       const mapPadToHotCue = new Map();
-      mapPadToHotCue[1] = [5];
-      mapPadToHotCue[2] = [6];
-      mapPadToHotCue[3] = [7];
-      mapPadToHotCue[4] = [8];
-      mapPadToHotCue[5] = [1];
-      mapPadToHotCue[6] = [2];
-      mapPadToHotCue[7] = [3];
-      mapPadToHotCue[8] = [4];
+      mapPadToHotCue[1] = 5;
+      mapPadToHotCue[2] = 6;
+      mapPadToHotCue[3] = 7;
+      mapPadToHotCue[4] = 8;
+      mapPadToHotCue[5] = 1;
+      mapPadToHotCue[6] = 2;
+      mapPadToHotCue[7] = 3;
+      mapPadToHotCue[8] = 4;
       this.mapPadToHotCue = mapPadToHotCue;
 
       this.connections = new Map();
@@ -219,13 +310,13 @@
     }
 
     connection(number) {
-      const callback = function(value, group, control) {
+      const callback = function (value, group, control) {
         console.log("HotCuesLayer: testing makeConnection number=" + number + ", value=" + value + ", control=" + control);
         this.output.led(this.mapPadToHotCue[number], value == 0 ? LedValue.OFF : LedValue.ON);
       };
 
       return engine.makeConnection(
-        this.group, 
+        this.group,
         "hotcue_" + number + "_status",
         callback.bind(this)
       );
@@ -252,21 +343,26 @@
 
       this.hotcuesLayer = new HotCuesLayer(this.group);
       this.beatjumpsLayer = new BeatJumpLayer(this.group);
+      this.autoloopLayer = new AutoLoopLayer(this.group);
+      this.perfomanceLayer = new PerfomanceLayer(this.group);
       this.currentLayerNum = 1;
     }
 
     updateLedState() {
       this.output.clear();
-      this.output.led(this.currentLayerNum, LedValue.ON);      
+      this.output.led(this.currentLayerNum, LedValue.ON);
     }
 
     currentLayer() {
-      //   console.log("SwitchLayersLayer: currentLayer() " + this.currentLayerNum);
+      console.log("SwitchLayersLayer: currentLayer() " + this.currentLayerNum);
       switch (this.currentLayerNum) {
         // case 1: - default
-        case 2:
-          //   console.log("SwitchLayersLayer: currentLayer() beatjumpsLayer " + this.beatjumpsLayer);
+        case 6:
+          return this.autoloopLayer;
+        case 7:
           return this.beatjumpsLayer;
+        case 8:
+          return this.perfomanceLayer;
         default:
           //   console.log("SwitchLayersLayer: currentLayer() hotcuesLayer " + this.hotcuesLayer);
           return this.hotcuesLayer;
@@ -355,7 +451,7 @@
         console.warn("ERROR: для инициализации DeviceOutput необходим midiToPad");
         return;
       }
-    
+
       this.pressedShift = false;
       this.groupsArray = options.groupsArray;
       this.inputs = new Map();
