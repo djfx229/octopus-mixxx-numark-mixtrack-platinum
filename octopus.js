@@ -244,6 +244,36 @@
     }
   }
 
+  class LoopRollLayer extends Layer {
+    constructor(group) {
+      super(group);
+
+      const mapPadToKey = new Map();
+      mapPadToKey[1] = 1 / 1;
+      mapPadToKey[2] = 1 / 2;
+      mapPadToKey[3] = 1 / 4;
+      mapPadToKey[4] = 1 / 8;
+      mapPadToKey[5] = 1 / 16;
+      mapPadToKey[6] = 1 / 32;
+      mapPadToKey[7] = 2;
+      mapPadToKey[8] = 4;
+      this.mapPadToKey = mapPadToKey;
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-beatlooproll_activate
+     */
+    pad(numberPad, isPressed) {
+      if (!this.pressedShift) {
+        console.log("LoopRollLayer: pad() numberPad=" + numberPad);
+        this.output.led(numberPad, isPressed ? LedValue.ON : LedValue.OFF);
+        const value = this.mapPadToKey[numberPad];
+        const key = "beatlooproll_" + value + "_activate";
+        engine.setValue(this.group, key, isPressed);
+      }
+    }
+  }
+
   class PerfomanceLayer extends Layer {
     constructor(group) {
       super(group);
@@ -342,9 +372,10 @@
       super(options.deck);
 
       this.hotcuesLayer = new HotCuesLayer(this.group);
-      this.beatjumpsLayer = new BeatJumpLayer(this.group);
       this.autoloopLayer = new AutoLoopLayer(this.group);
+      this.beatjumpsLayer = new BeatJumpLayer(this.group);
       this.perfomanceLayer = new PerfomanceLayer(this.group);
+      this.looprollLayer = new LoopRollLayer(this.group);
       this.currentLayerNum = 1;
     }
 
@@ -357,6 +388,8 @@
       console.log("SwitchLayersLayer: currentLayer() " + this.currentLayerNum);
       switch (this.currentLayerNum) {
         // case 1: - default
+        case 2:
+          return this.looprollLayer;
         case 6:
           return this.autoloopLayer;
         case 7:
