@@ -4,9 +4,16 @@
 
 (function (global) {
 
+  /**
+   * Превращает десятичное число в шестнадцатеричное в виде отформатированной строки
+   */
+  const formatToHex = function (dec) {
+    return "0x" + ("0" + (Number(dec).toString(16))).slice(-2).toUpperCase()
+  }
+
   class LedValue {
     static get ON() {
-      return 0x7F;
+      return 0x40;
     }
 
     static get OFF() {
@@ -74,10 +81,16 @@
     }
 
     led(numberPad, value) {
+      // console.log("DeviceOutput: led numberPad=" + numberPad + " , value=" + value + " ");
       const address = this.requestPadAddress(this.group, numberPad);
+      // console.log("DeviceOutput: led address.midinoArray=" + address.midinoArray + " , address.channel=" + address.channel + " ");
+      
       if (address instanceof MidiAddress) {
         address.midinoArray.forEach((midino) => {
-          midi.sendShortMsg(0x90 | address.channel, midino, value);
+          const status = 0x90 | address.channel;
+          // console.log("DeviceOutput: led midinoArray.forEach status=" + formatToHex(status) + " , midino=" + formatToHex(midino) + " ");
+          
+          midi.sendShortMsg(status, midino, value);
         })
       }
     }
@@ -168,7 +181,7 @@
     }
 
     pad(numberPad, isPressed) {
-      console.log("BeatJumpLayer: pressed pad " + numberPad);
+      console.log("BeatJumpLayer: group=" + this.group + ", pressed pad " + numberPad);
 
       if (isPressed) {
         const action = this.mapPadToAction[numberPad];
@@ -382,6 +395,7 @@
     }
 
     switchLayerButton(channel, control, value, status, group) {
+      console.log("GroupedInputs: switchLayerButton()");
       this.inputs[group].switchLayerButton(value);
     }
   }

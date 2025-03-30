@@ -7,7 +7,6 @@
 /* global midi                                                        */
 ////////////////////////////////////////////////////////////////////////
 
-
 /******************
  * CONFIG OPTIONS *
  ******************/
@@ -21,76 +20,6 @@ var ShiftLoadEjects = false;
 // should we show effect parameters when an effect is focused?
 var ShowFocusedEffectParameters = false;
 
-class NumarkPlatinumPadMapper {
-    constructor() {
-        const row1SpmUnshift = new Map();
-        row1SpmUnshift[0x21] = 1;
-        row1SpmUnshift[0x22] = 2;
-        row1SpmUnshift[0x23] = 3;
-        row1SpmUnshift[0x24] = 4;
-
-        const row1SpmShift = new Map();
-        row1SpmShift[0x28] = 1;
-        row1SpmShift[0x29] = 2;
-        row1SpmShift[0x2A] = 3;
-        row1SpmShift[0x2B] = 4;
-
-        const row2CpmUnshift = new Map();
-        row2CpmUnshift[0x18] = 5;
-        row2CpmUnshift[0x19] = 6;
-        row2CpmUnshift[0x1A] = 7;
-        row2CpmUnshift[0x1B] = 8;
-
-        const row2CpmShift = new Map();
-        row2CpmShift[0x20] = 5;
-        row2CpmShift[0x21] = 6;
-        row2CpmShift[0x22] = 7;
-        row2CpmShift[0x23] = 8;
-
-        const mapPadToLedHex = new Map();
-        mapPadToLedHex[1] = [0x21, 0x28];
-        mapPadToLedHex[2] = [0x22, 0x29];
-        mapPadToLedHex[3] = [0x23, 0x2A];
-        mapPadToLedHex[4] = [0x24, 0x2B];
-        mapPadToLedHex[5] = [0x18, 0x20];
-        mapPadToLedHex[6] = [0x19, 0x21];
-        mapPadToLedHex[7] = [0x1A, 0x22];
-        mapPadToLedHex[8] = [0x1B, 0x23];
-
-        this.row1SpmUnshift = row1SpmUnshift;
-        this.row1SpmShift = row1SpmShift;
-        this.row2CpmUnshift = row2CpmUnshift;
-        this.row2CpmShift = row2CpmShift;
-        this.mapPadToLedHex = mapPadToLedHex;
-    }
-
-    requestPadAddress(group, numberPad) {
-        const channel = numberPad < 5 ? 0x0F : 0x04;
-
-        const address = new octopus.MidiAddress({
-            midinoArray: this.mapPadToLedHex[numberPad],
-            channel: channel,
-        });
-        return address;
-    }
-
-    midiToPad(group, control, channel, isShift) {
-        // console.log("NumarkPlatinumPadMapper: midiToPad() " +
-        //     " group=" + group +
-        //     ", control=" + control +
-        //     ", channel=" + channel +
-        //     ", isShift=" + isShift
-        // );
-        let map;
-        if (channel == "0x0F") {
-            map = isShift ? this.row1SpmShift : this.row1SpmUnshift;
-        } else if (channel == "0x04") {
-            map = isShift ? this.row2CpmShift : this.row2CpmUnshift;
-        }
-        return map[control];
-    }
-}
-
 var MixtrackPlatinum = {};
 
 MixtrackPlatinum.init = function (id, debug) {
@@ -100,10 +29,7 @@ MixtrackPlatinum.init = function (id, debug) {
     const padMapper = new NumarkPlatinumPadMapper();
 
     MixtrackPlatinum.octopusInputs = new octopus.GroupedInputs({
-        groupsArray: [
-            "[Channel1]",
-            "[Channel2]",
-        ],
+        groupsArray: padMapper.groups,
         output: MixtrackPlatinum.octopusOutput,
         midiToPad: padMapper.midiToPad.bind(padMapper),
         requestPadAddress: padMapper.requestPadAddress.bind(padMapper),
@@ -720,90 +646,10 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
     });
     this.manloop = this.normal_manloop;
 
-    auto_loop_hotcue = function(midino, obj) {
-        return _.assign({
-            midi: [0x94 + midi_chan, midino],
-            on: 0x40,
-            sendShifted: true,
-            shiftControl: true,
-            shiftOffset: 0x08,
-        }, obj);
-    };
-
-    auto_loop_base = function(midino, obj) {
-        return _.assign({
-            midi: [0x94 + midi_chan, midino],
-            on: 0x40,
-            sendShifted: true,
-            shiftChannel: true,
-            shiftOffset: -0x10,
-        }, obj);
-    };
-
-    this.normal_autoloop = new components.ComponentContainer({
-        auto1: new components.Button(auto_loop_base(0x14, {
-            inKey: 'beatloop_1_toggle',
-            outKey: 'beatloop_1_enabled',
-        })),
-        auto2: new components.Button(auto_loop_base(0x15, {
-            inKey: 'beatloop_2_toggle',
-            outKey: 'beatloop_2_enabled',
-        })),
-        auto3: new components.Button(auto_loop_base(0x16, {
-            inKey: 'beatloop_4_toggle',
-            outKey: 'beatloop_4_enabled',
-        })),
-        auto4: new components.Button(auto_loop_base(0x17, {
-            inKey: 'beatloop_8_toggle',
-            outKey: 'beatloop_8_enabled',
-        })),
-
-        roll1: new components.Button(auto_loop_base(0x1C, {
-            inKey: 'beatlooproll_0.0625_activate',
-            outKey: 'beatloop_0.0625_enabled',
-        })),
-        roll2: new components.Button(auto_loop_base(0x1D, {
-            inKey: 'beatlooproll_0.125_activate',
-            outKey: 'beatloop_0.125_enabled',
-        })),
-        roll3: new components.Button(auto_loop_base(0x1E, {
-            inKey: 'beatlooproll_0.25_activate',
-            outKey: 'beatloop_0.25_enabled',
-        })),
-        roll4: new components.Button(auto_loop_base(0x1F, {
-            inKey: 'beatlooproll_0.5_activate',
-            outKey: 'beatloop_0.5_enabled',
-        })),
-    });
-
-    this.autoloop = this.normal_autoloop;
-
     this.pad_mode = new components.Component({
         input: function (channel, control, value, status, group) {
             // only handle button down events
             if (value != 0x7F) return;
-
-            // if shifted, set a special mode
-            if (this.isShifted) {
-                // auto loop
-                if (control == 0x06) {
-                    deck.autoloop = deck.alternate_autoloop;
-                    deck.autoloop.reconnectComponents();
-                }
-            }
-            // otherwise set a normal mode
-            else {
-                // manual loop
-                if (control == 0x0E) {
-                    deck.manloop = deck.normal_manloop;
-                    deck.manloop.reconnectComponents();
-                }
-                // auto loop
-                else if (control == 0x06) {
-                    deck.autoloop = deck.normal_autoloop;
-                    deck.autoloop.reconnectComponents();
-                }
-            }
         },
         shift: function() {
             this.isShifted = true;
@@ -1336,3 +1182,118 @@ MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group)
         MixtrackPlatinum.browse.unshift();
     }
 };
+
+class NumarkPlatinumPadMapper {
+    constructor() {
+        this.groups = [
+            "[Channel1]",
+            "[Channel2]",
+            "[Channel3]",
+            "[Channel4]",
+        ];
+
+        const mapGroupToChannel = new Map();
+        mapGroupToChannel["[Channel1]"] = 0x04;
+        mapGroupToChannel["[Channel2]"] = 0x05;
+        mapGroupToChannel["[Channel3]"] = 0x06;
+        mapGroupToChannel["[Channel4]"] = 0x07;
+
+        const mapMidiToPadUnshift = new Map();
+        for (let i = 0; i < 8; i++) {
+            mapMidiToPadUnshift[0x14 + i] = i + 1;
+        }
+
+        const mapMidiToPadShift = new Map();
+        for (let i = 0; i < 8; i++) {
+            mapMidiToPadShift[0x1C + i] = i + 1;
+        }
+
+        const mapPadToLedHex = new Map();
+        for (let i = 0; i < 8; i++) {
+            mapPadToLedHex[1 + i] = [0x14 + i, 0x1C + i];
+        }
+
+        this.mapMidiToPadUnshift = mapMidiToPadUnshift;
+        this.mapMidiToPadShift = mapMidiToPadShift;
+        this.mapPadToLedHex = mapPadToLedHex;
+        this.mapGroupToChannel = mapGroupToChannel;
+    }
+
+    requestPadAddress(group, numberPad) {
+        const channel = this.mapGroupToChannel[group];
+        const address = new octopus.MidiAddress({
+            midinoArray: this.mapPadToLedHex[numberPad],
+            channel: channel,
+        });
+        return address;
+    }
+
+    midiToPad(group, control, channel, isShift) {
+        // console.log("NumarkPlatinumPadMapper: midiToPad() " +
+        //     " group=" + group +
+        //     ", control=" + control +
+        //     ", channel=" + channel +
+        //     ", isShift=" + isShift
+        // );
+        const map = isShift ? this.mapMidiToPadShift : this.mapMidiToPadUnshift;
+        return map[control];
+    }
+
+    generateControl(inputs, key, status, group, midino) {
+        const formatToHex = function (dec) {
+            return "0x" + ("0"+(Number(dec).toString(16))).slice(-2).toUpperCase()
+        }
+        return `
+            <control>
+                <group>${group}</group>
+                <key>${inputs}.${key}</key>
+                <description>generated by NumarkPlatinumPadMapper.generateXml()</description>
+                <status>${formatToHex(status)}</status>
+                <midino>${formatToHex(midino)}</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+      `;
+    }
+
+    generateXml(inputs) {
+        const generateControlsForPads = (group, channel) => {
+            var result = "";
+            for (let number = 1; number <= 8; number++) {
+                const status = 0x90 | channel;
+                const midinoArray = this.mapPadToLedHex[number];
+
+                midinoArray.forEach((midino) => {
+                    result = result + this.generateControl(
+                        inputs,
+                        "input",
+                        status,
+                        group,
+                        midino,
+                    );
+                })
+            }
+            return result;
+        }
+
+        var result = "";
+        this.groups.forEach((group) => {
+            const channel = this.mapGroupToChannel[group];
+
+            // я хуй знает что это за прикол деки вешать на каналы начиная с 5го, при этом кнопки wheel 
+            // номеруются по человечески с 1...
+            const status = 0x90 | (channel - 4);
+            
+            result = result + this.generateControl(
+                inputs,
+                "switchLayerButton",
+                status,
+                group,
+                0x07,
+            );
+            result = result +  generateControlsForPads(group, channel);
+        });
+        return result;
+    }
+}
