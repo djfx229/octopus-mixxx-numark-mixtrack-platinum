@@ -200,7 +200,7 @@
     }
 
     pad(numberPad, isPressed) {
-      console.log("HotCuesLayer: pressed pad " + numberPad);
+      console.log("HotCuesLayer: pressed pad " + numberPad + ", shift=" + this.pressedShift);
 
       const operation = this.pressedShift ? "_clear" : "_activate";
       const key = "hotcue_" + this.mapPadToHotCue[numberPad] + operation;
@@ -278,20 +278,12 @@
       }
     };
 
-    shift() {
-      this.pressedShift = true;
-      this.switchLayersLayer.currentLayer().shift(this.pressedShift);
-    }
-
-    unshift() {
-      this.pressedShift = false;
-      this.switchLayersLayer.currentLayer().shift(this.pressedShift);
-    }
+    shift(isPressed) {
+      this.pressedShift = isPressed;
+      this.switchLayersLayer.currentLayer().shift(isPressed);
+    };
 
     pad(numPad, value) {
-      console.log("Input: pressed pad " + numPad);
-      console.log("Input: current layer " + this.switchLayersLayer.currentLayer());
-
       const isPressed = value > 0;
       if (this.isSwitchLayerState) {
         this.switchLayersLayer.pad(numPad, isPressed);
@@ -301,13 +293,59 @@
     }
   }
 
+  /**
+   * @param options Object содержащий в себе:
+   * groupsArray: List<String> - массив названий групп (например, [Channel1]), для которых 
+   *  будут созданы Input.
+   * output: Output
+   * midiToPad: function (group, control, channel, isShift) - сопоставляет, к какому паду 
+   *  относится полученное midi сообщение
+   */
+  class GroupedInputs {
+    constructor(options) {
+      this.pressedShift = false;
+      this.groupsArray = options.groupsArray;
+      this.inputs = new Map();
+      this.midiToPad = options.midiToPad;
+
+      const buildInput = (group, output) => {
+        const input = new Input({
+          group: group,
+        });
+        input.connect(output);
+        return input;
+      };
+
+      this.groupsArray.forEach((group) => {
+        this.inputs[group] = buildInput(group, options.output);
+      })
+    }
+
+    shift(isPressed) {
+      this.pressedShift = isPressed;
+      this.groupsArray.forEach((group) => {
+        const input = this.inputs[group];
+        if (input instanceof Input) {
+          input.shift(this.pressedShift);
+        }
+      })
+    }
+
+    input(channel, control, value, status, group) {
+      const number = this.midiToPad(group, control, channel, this.pressedShift);
+      this.inputs[group].pad(number, value);
+    }
+
+    switchLayerButton(channel, control, value, status, group) {
+      this.inputs[group].switchLayerButton(value);
+    }
+  }
+
   // Экспортируем классы в глобальный объект
   const exports = {};
   exports.Input = Input;
-  // private exports.Output = Output;
+  exports.GroupedInputs = GroupedInputs;
   exports.DeviceOutput = DeviceOutput;
-  // private exports.Layer = Layer;
-  // private exports.SwitchLayersLayer = SwitchLayersLayer;
   exports.BeatJumpLayer = BeatJumpLayer;
   exports.HotCuesLayer = HotCuesLayer;
 

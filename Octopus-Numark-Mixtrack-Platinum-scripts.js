@@ -62,17 +62,23 @@ class PadMapper {
         this.row2CpmUnshift = row2CpmUnshift;
         this.row2CpmShift = row2CpmShift;
         this.mapPadToLedHex = mapPadToLedHex;
-      }
 
-    midiToPad(control, channel, isShift) {
-        let map;
-        if (channel == "0x0F") {
-            map = isShift ? this.row1SpmShift : this.row1SpmUnshift;
-        } else if (channel == "0x04") {
-            map =  isShift ? this.row2CpmShift : this.row2CpmUnshift;
+        this.midiToPad = (group, control, channel, isShift) => {
+            // console.log("PadMapper: midiToPad() " +
+            //     " group=" + group +
+            //     ", control=" + control +
+            //     ", channel=" + channel +
+            //     ", isShift=" + isShift
+            // );
+            let map;
+            if (channel == "0x0F") {
+                map = isShift ? this.row1SpmShift : this.row1SpmUnshift;
+            } else if (channel == "0x04") {
+                map =  isShift ? this.row2CpmShift : this.row2CpmUnshift;
+            }
+            return map[control];
         }
-        return map[control]
-    }
+      }
 }
 
 var MixtrackPlatinum = {};
@@ -89,19 +95,13 @@ MixtrackPlatinum.init = function (id, debug) {
         mapPadToLedHex: MixtrackPlatinum.padMapper.mapPadToLedHex,
     });
 
-    MixtrackPlatinum.octopusInput = new octopus.Input({
-        group: "[Channel1]",
+    MixtrackPlatinum.octopusInputs = new octopus.GroupedInputs({
+        groupsArray: [
+            "[Channel1]",
+        ],
+        output: MixtrackPlatinum.octopusOutput,
+        midiToPad: MixtrackPlatinum.padMapper.midiToPad.bind(this),
     });
-    MixtrackPlatinum.octopusInput.connect(MixtrackPlatinum.octopusOutput);
-
-    MixtrackPlatinum.octopusPad = function (channel, control, value, status, group) {
-        const number = MixtrackPlatinum.padMapper.midiToPad(control, channel, MixtrackPlatinum.shift)
-        MixtrackPlatinum.octopusInput.pad(number, value)
-    },
-
-    MixtrackPlatinum.octopusSwitchLayerButton = function (channel, control, value, status, group) {
-        MixtrackPlatinum.octopusInput.switchLayerButton(value)
-    },
 
     // effects
     MixtrackPlatinum.effects = new components.ComponentContainer();
@@ -1311,11 +1311,12 @@ MixtrackPlatinum.shift = false;
 MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group) {
     MixtrackPlatinum.shift = value == 0x7F;
 
+    MixtrackPlatinum.octopusInputs.shift(MixtrackPlatinum.shift);
+
     if (MixtrackPlatinum.shift) {
         MixtrackPlatinum.decks.shift();
         MixtrackPlatinum.effects.shift();
         MixtrackPlatinum.browse.shift();
-        MixtrackPlatinum.octopusInput.shift();
 
         // reset the beat jump scratch accumulators
         MixtrackPlatinum.scratch_accumulator[1] = 0;
@@ -1327,6 +1328,5 @@ MixtrackPlatinum.shiftToggle = function (channel, control, value, status, group)
         MixtrackPlatinum.decks.unshift();
         MixtrackPlatinum.effects.unshift();
         MixtrackPlatinum.browse.unshift();
-        MixtrackPlatinum.octopusInput.unshift();
     }
 };

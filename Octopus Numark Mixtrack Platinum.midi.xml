@@ -17,7 +17,7 @@
         <controls>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusSwitchLayerButton</key>
+                <key>MixtrackPlatinum.octopusInputs.switchLayerButton</key>
                 <description>wheel button to toggle vinyl mode</description>
                 <status>0x90</status>
                 <midino>0x07</midino>
@@ -28,7 +28,7 @@
 
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x21</midino>
                 <options>
@@ -37,7 +37,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x22</midino>
                 <options>
@@ -46,7 +46,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x23</midino>
                 <options>
@@ -55,7 +55,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x24</midino>
                 <options>
@@ -65,7 +65,7 @@
 
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x28</midino>
                 <options>
@@ -74,7 +74,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x29</midino>
                 <options>
@@ -83,7 +83,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x2A</midino>
                 <options>
@@ -92,7 +92,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x9F</status>
                 <midino>0x2B</midino>
                 <options>
@@ -102,7 +102,7 @@
 
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x18</midino>
                 <options>
@@ -111,7 +111,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x19</midino>
                 <options>
@@ -120,7 +120,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x1A</midino>
                 <options>
@@ -129,7 +129,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x1B</midino>
                 <options>
@@ -139,7 +139,7 @@
 
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x20</midino>
                 <options>
@@ -148,7 +148,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x21</midino>
                 <options>
@@ -157,7 +157,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x22</midino>
                 <options>
@@ -166,7 +166,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>MixtrackPlatinum.octopusPad</key>
+                <key>MixtrackPlatinum.octopusInputs.input</key>
                 <status>0x94</status>
                 <midino>0x23</midino>
                 <options>
