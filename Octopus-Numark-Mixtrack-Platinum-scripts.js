@@ -21,7 +21,7 @@ var ShiftLoadEjects = false;
 // should we show effect parameters when an effect is focused?
 var ShowFocusedEffectParameters = false;
 
-class PadMapper {
+class NumarkPlatinumPadMapper {
     constructor() {
         const row1SpmUnshift = new Map();
         row1SpmUnshift[0x21] = 1;
@@ -62,23 +62,33 @@ class PadMapper {
         this.row2CpmUnshift = row2CpmUnshift;
         this.row2CpmShift = row2CpmShift;
         this.mapPadToLedHex = mapPadToLedHex;
+    }
 
-        this.midiToPad = (group, control, channel, isShift) => {
-            // console.log("PadMapper: midiToPad() " +
-            //     " group=" + group +
-            //     ", control=" + control +
-            //     ", channel=" + channel +
-            //     ", isShift=" + isShift
-            // );
-            let map;
-            if (channel == "0x0F") {
-                map = isShift ? this.row1SpmShift : this.row1SpmUnshift;
-            } else if (channel == "0x04") {
-                map =  isShift ? this.row2CpmShift : this.row2CpmUnshift;
-            }
-            return map[control];
+    requestPadAddress(group, numberPad) {
+        const channel = numberPad < 5 ? 0x0F : 0x04;
+
+        const address = new octopus.MidiAddress({
+            midinoArray: this.mapPadToLedHex[numberPad],
+            channel: channel,
+        });
+        return address;
+    }
+
+    midiToPad(group, control, channel, isShift) {
+        // console.log("NumarkPlatinumPadMapper: midiToPad() " +
+        //     " group=" + group +
+        //     ", control=" + control +
+        //     ", channel=" + channel +
+        //     ", isShift=" + isShift
+        // );
+        let map;
+        if (channel == "0x0F") {
+            map = isShift ? this.row1SpmShift : this.row1SpmUnshift;
+        } else if (channel == "0x04") {
+            map = isShift ? this.row2CpmShift : this.row2CpmUnshift;
         }
-      }
+        return map[control];
+    }
 }
 
 var MixtrackPlatinum = {};
@@ -86,21 +96,17 @@ var MixtrackPlatinum = {};
 MixtrackPlatinum.init = function (id, debug) {
     MixtrackPlatinum.id = id;
     MixtrackPlatinum.debug = debug;
-    MixtrackPlatinum.padMapper = new PadMapper();
-
-    MixtrackPlatinum.octopusOutput = new octopus.DeviceOutput({
-        getMidiChannel: function(numberPad) {
-            return numberPad < 5 ? 0x0F : 0x04;
-        },
-        mapPadToLedHex: MixtrackPlatinum.padMapper.mapPadToLedHex,
-    });
+    
+    const padMapper = new NumarkPlatinumPadMapper();
 
     MixtrackPlatinum.octopusInputs = new octopus.GroupedInputs({
         groupsArray: [
             "[Channel1]",
+            "[Channel2]",
         ],
         output: MixtrackPlatinum.octopusOutput,
-        midiToPad: MixtrackPlatinum.padMapper.midiToPad.bind(this),
+        midiToPad: padMapper.midiToPad.bind(padMapper),
+        requestPadAddress: padMapper.requestPadAddress.bind(padMapper),
     });
 
     // effects

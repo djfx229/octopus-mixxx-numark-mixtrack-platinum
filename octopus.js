@@ -37,24 +37,49 @@
   }
   
   /**
+   * Для создания объекта связывающего пад с его реальным midi сообщением.
+   * 
    * @param options Object содержащий в себе:
-   * midiChannelCallback - функций принимающая номер пада, и возвращающая для него номер канала
-   * mapPadToLedHex - карта сопоставляющая номер пада с его midino кодом.
+   * midinoArray
+   * channel - hex код канала
+   */
+  class MidiAddress {
+    constructor(options) {
+      this.midinoArray = options.midinoArray;
+      this.channel = options.channel;
+    }
+  }
+
+  /**
+   * @param options Object содержащий в себе:
+   * group: String группа, обозначенная в рамках маппинга (например, [Channel1])
+   * requestPadAddress: function(group, pad) => MidiAddress
    */
   class DeviceOutput extends Output {
     constructor(options) {
       super();
-      this.getMidiChannel = options.getMidiChannel;
-      this.mapPadToLedHex = options.mapPadToLedHex;
+
+      if (options.group === undefined) {
+        console.warn("ERROR: для инициализации DeviceOutput необходим group");
+        return;
+      }
+
+      if (options.requestPadAddress === undefined) {
+        console.warn("ERROR: для инициализации DeviceOutput необходим requestPadAddress");
+        return;
+      }
+
+      this.group = options.group;
+      this.requestPadAddress = options.requestPadAddress;
     }
 
     led(numberPad, value) {
-      const midinoArray = this.mapPadToLedHex[numberPad];
-      console.log("DeviceOutput: led() midinoArray=" + midinoArray + ", numberPad=" + numberPad + " , value=" + value + " ");
-
-      midinoArray.forEach((midino) => {
-        midi.sendShortMsg(0x90 | this.getMidiChannel(numberPad), midino, value);
-      })
+      const address = this.requestPadAddress(this.group, numberPad);
+      if (address instanceof MidiAddress) {
+        address.midinoArray.forEach((midino) => {
+          midi.sendShortMsg(0x90 | address.channel, midino, value);
+        })
+      }
     }
 
     clear() {
@@ -297,12 +322,27 @@
    * @param options Object содержащий в себе:
    * groupsArray: List<String> - массив названий групп (например, [Channel1]), для которых 
    *  будут созданы Input.
-   * output: Output
    * midiToPad: function (group, control, channel, isShift) - сопоставляет, к какому паду 
    *  относится полученное midi сообщение
+   * requestPadAddress: function(group, pad) => MidiAddress
    */
   class GroupedInputs {
     constructor(options) {
+      if (options.requestPadAddress === undefined) {
+        console.warn("ERROR: для инициализации DeviceOutput необходим requestPadAddress");
+        return;
+      }
+
+      if (options.groupsArray === undefined) {
+        console.warn("ERROR: для инициализации DeviceOutput необходим groupsArray");
+        return;
+      }
+
+      if (options.midiToPad === undefined) {
+        console.warn("ERROR: для инициализации DeviceOutput необходим midiToPad");
+        return;
+      }
+    
       this.pressedShift = false;
       this.groupsArray = options.groupsArray;
       this.inputs = new Map();
@@ -317,7 +357,12 @@
       };
 
       this.groupsArray.forEach((group) => {
-        this.inputs[group] = buildInput(group, options.output);
+        const output = new DeviceOutput({
+          group: group,
+          requestPadAddress: options.requestPadAddress,
+          midiToPad: options.midiToPad,
+        });
+        this.inputs[group] = buildInput(group, output);
       })
     }
 
@@ -343,6 +388,7 @@
 
   // Экспортируем классы в глобальный объект
   const exports = {};
+  exports.MidiAddress = MidiAddress;
   exports.Input = Input;
   exports.GroupedInputs = GroupedInputs;
   exports.DeviceOutput = DeviceOutput;
