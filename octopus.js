@@ -278,37 +278,76 @@
     constructor(group) {
       super(group);
       this.deck = 1; // script.deckFromGroup(this.group);
-      this.factor = 0.5;
-    }
-
-    updateLedState() {
-      for (let number = 1; number <= 8; number++) {
-        this.output.led(number, LedValue.ON);
-      }
+      this.brakeFactor = 0.5;
     }
 
     pad(numberPad, isPressed) {
       console.log("PerfomanceLayer: pad() numberPad=" + numberPad);
       switch (numberPad) {
-        case 8:
-          this.break(isPressed);
+        case 1:
+          if (isPressed) engine.setValue(this.group, "sync_key", 1);
+        case 2:
+          if (isPressed) engine.setValue(this.group, "reset_key", 1);
           break;
+        case 3:
+          if (isPressed) engine.setValue(this.group, "pitch_down", 1);
+          break;
+        case 4:
+          if (isPressed) engine.setValue(this.group, "pitch_up", 1);
+          break;
+        case 5:
+          engine.setValue(this.group, "beats_translate_curpos", isPressed);
+          break;
+        case 6:
+          this.slip(isPressed);
+          break;
+        case 7:
+          this.revers(numberPad, isPressed);
+          break;
+        case 8:
+          this.brake(isPressed);
+          break;
+      }
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-slip_enabled
+     */
+    slip(isPressed) {
+      if (isPressed) {
+        const isActive = engine.getValue(this.group, "slip_enabled");
+        engine.setValue(this.group, "slip_enabled", isActive ? 0 : 1);
+      }
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-reverseroll
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-reverse
+     */
+    revers(numberPad, isPressed) {
+      if (this.pressedShift) {
+        this.output.led(numberPad, isPressed ? LedValue.ON : LedValue.OFF);
+        engine.setValue(this.group, "reverseroll", isPressed);
+      } else if (isPressed) {
+        const isActive = engine.getValue(this.group, "reverse");
+        const value = isActive ? 0 : 1;
+        engine.setValue(this.group, "reverse", value);
+        this.output.led(numberPad, value ? LedValue.ON : LedValue.OFF);
       }
     }
 
     /**
      * https://github.com/mixxxdj/mixxx/wiki/midi%20scripting#spinback-brake-and-soft-start-effect
      */
-    break(isPressed) {
-      console.log("PerfomanceLayer: break() isPressed=" + isPressed);
-      // engine.softStart(this.deck, isPressed, 2.0);
-      engine.brake(this.deck, isPressed, 1.0);
-
-      // if (activate) { // act on button press
-      //     engine.brake(deck, true); // slow down the track
-      // } else { // act on button release
-      //     engine.softStart(deck, true);
-      // }
+    brake(isPressed) {
+      if (isPressed) {
+        const isActive = engine.getValue(this.group, "play_latched");
+        if (isActive) {
+          engine.brake(this.deck, true, this.brakeFactor);
+        } else {
+          engine.softStart(this.deck, true, this.brakeFactor);
+        }
+      }
     }
   }
 
