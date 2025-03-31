@@ -274,6 +274,84 @@
     }
   }
 
+  class DeckSettingsLayer extends Layer {
+    constructor(group) {
+      super(group);
+      this.currentMode = 0;
+      this.pitchSliderRanges = [0.08, 0.16, 0.50, 1.0];
+    }
+
+    pad(numberPad, isPressed) {
+      if (numberPad < 5) {
+        if (isPressed) {
+          this.currentMode = numberPad;
+          console.log("DeckSettingsLayer: pad() change mode, currentMode=" + this.currentMode);
+        } else {
+          this.currentMode = 0;
+          console.log("DeckSettingsLayer: pad() reset mode");
+        }
+      } else if (isPressed) {
+        const value = numberPad - 4;
+        console.log("DeckSettingsLayer: pad() use mode, value=" + value);
+        switch (this.currentMode) {
+          case 1:
+            this.changePitchRange(value);
+            break;
+          case 2:
+            this.changeCrossfadeOrientation(value);
+            break;
+          case 3:
+            // sync, quantize, beats_translate_curpos
+            break;
+          case 4:
+            // ???
+            break;
+          default:
+            this.changeKey(value);
+            break;
+        }
+      }
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls.html#control-%5BChannelN%5D-rateRange
+     */
+    changePitchRange(value) {
+      engine.setValue(this.group, 'rateRange', this.pitchSliderRanges[value - 1]);
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls.html#control-%5BChannelN%5D-orientation
+     */
+    changeCrossfadeOrientation(value) {
+      if (value < 4) {
+        engine.setValue(this.group, 'orientation', value - 1);
+      }
+    }
+
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls.html#control-%5BChannelN%5D-sync_key
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls.html#control-%5BChannelN%5D-reset_key
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls.html#control-%5BChannelN%5D-pitch_down
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls.html#control-%5BChannelN%5D-pitch_up
+     */
+    changeKey(numberPad) {
+      switch (numberPad) {
+        case 1:
+          engine.setValue(this.group, "sync_key", 1);
+        case 2:
+          engine.setValue(this.group, "reset_key", 1);
+          break;
+        case 3:
+          engine.setValue(this.group, "pitch_down", 1);
+          break;
+        case 4:
+          engine.setValue(this.group, "pitch_up", 1);
+          break;
+      }
+    }
+  }
+
   class PerfomanceLayer extends Layer {
     constructor(group) {
       super(group);
@@ -415,6 +493,7 @@
       this.beatjumpsLayer = new BeatJumpLayer(this.group);
       this.perfomanceLayer = new PerfomanceLayer(this.group);
       this.looprollLayer = new LoopRollLayer(this.group);
+      this.deckSettingsLayer = new DeckSettingsLayer(this.group);
       this.currentLayerNum = 1;
     }
 
@@ -429,6 +508,8 @@
         // case 1: - default
         case 2:
           return this.looprollLayer;
+        case 4:
+          return this.deckSettingsLayer;
         case 6:
           return this.autoloopLayer;
         case 7:
