@@ -48,7 +48,10 @@ MixtrackPlatinum.init = function (id, debug) {
     MixtrackPlatinum.decks[4] = new MixtrackPlatinum.Deck(4, 0x03, MixtrackPlatinum.effects[2]);
 
     // headphone gain
-    MixtrackPlatinum.head_gain = new MixtrackPlatinum.HeadGain();
+    MixtrackPlatinum.head_gain = new components.Pot({
+        group: '[Master]',
+        inKey: 'headGain',
+    });
 
     // exit demo mode
     var byteArray = [0xF0, 0x00, 0x01, 0x3F, 0x7F, 0x3A, 0x60, 0x00, 0x04, 0x04, 0x01, 0x00, 0x00, 0xF7];
@@ -762,17 +765,6 @@ MixtrackPlatinum.Deck = function(number, midi_chan, effects_unit) {
 };
 
 MixtrackPlatinum.Deck.prototype = new components.Deck();
-
-MixtrackPlatinum.HeadGain = function() {
-    components.Pot.call(this);
-};
-MixtrackPlatinum.HeadGain.prototype = new components.Pot({
-    group: '[Main]',
-    inKey: 'headGain',
-    input: function (channel, control, value, status, group) {
-        components.Pot.prototype.input.call(this, channel, control, value, status, group);
-    },
-});
 
 MixtrackPlatinum.BrowseKnob = function() {
     this.knob = new components.Encoder({
