@@ -16,6 +16,10 @@
       return 0x40;
     }
 
+    static get HALF() {
+      return 0x03;
+    }
+
     static get OFF() {
       return 0x00;
     }
@@ -176,7 +180,7 @@
 
     updateLedState() {
       for (let number = 1; number <= 8; number++) {
-        this.output.led(number, number % 2 == 1 ? 0x03 : LedValue.ON);
+        this.output.led(number, number % 2 == 1 ? LedValue.HALF : LedValue.ON);
       }
     }
 
@@ -216,7 +220,7 @@
 
     updateLedState() {
       for (let number = 1; number <= 8; number++) {
-        this.output.led(number, number < 7 ? LedValue.ON : 0x01);
+        this.output.led(number, number < 7 ? LedValue.ON : LedValue.HALF);
       }
     }
 
@@ -282,7 +286,7 @@
     }
 
     pad(numberPad, isPressed) {
-      if (numberPad < 5) {
+      if (numberPad < 4) {
         if (isPressed) {
           this.currentMode = numberPad;
           console.log("DeckSettingsLayer: pad() change mode, currentMode=" + this.currentMode);
@@ -290,6 +294,8 @@
           this.currentMode = 0;
           console.log("DeckSettingsLayer: pad() reset mode");
         }
+      } else if (numberPad == 4 && isPressed) {
+        // включить - выключить отображение bpm
       } else if (isPressed) {
         const value = numberPad - 4;
         console.log("DeckSettingsLayer: pad() use mode, value=" + value);
@@ -301,10 +307,7 @@
             this.changeCrossfadeOrientation(value);
             break;
           case 3:
-            // sync, quantize, beats_translate_curpos
-            break;
-          case 4:
-            // ???
+            // sync, beats_translate_curpos
             break;
           default:
             this.changeKey(value);
@@ -352,7 +355,76 @@
     }
   }
 
-  class PerfomanceLayer extends Layer {
+  class CueLoopLayer extends Layer {
+    constructor(group) {
+      super(group);
+
+      this.offset = 8;
+      this.count = 7;
+
+      this.connections = new Map();
+
+      for (let number = 1; number <= this.count; number++) {
+        this.connections[number] = this.connection(number);
+      }
+    }
+
+    connection(number) {
+      const callback = function (value, group, control) {
+        console.log("CueLoopsLayer: testing makeConnection number=" + number + ", value=" + value + ", control=" + control);
+        this.output.led(number, value == 0 ? LedValue.OFF : LedValue.ON);
+      };
+
+      return engine.makeConnection(
+        this.group,
+        "hotcue_" + (number + this.offset) + "_status",
+        callback.bind(this)
+      );
+    }
+
+    updateLedState() {
+      for (let number = 1; number <= this.count; number++) {
+        this.connections[number].trigger();
+      }
+      this.output.led(this.count + 1, LedValue.HALF);
+    }
+
+    pad(numberPad, isPressed) {
+
+      if (isPressed) {
+        if (numberPad <= this.count) {
+          // https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_status
+          const isActive = () => {
+            const result = engine.getValue(this.group, "hotcue_" + (numberPad + this.offset) + "_status");
+            console.log("CueLoopsLayer: pressed pad status=" + result);
+            return result > 0;
+          }
+
+          const keyPrefix = "hotcue_" + (numberPad + this.offset);
+          if (this.pressedShift) {
+            // https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_clear
+            const key = keyPrefix + "_clear";
+            console.log("CueLoopsLayer: pressed pad key=" + key);
+            engine.setValue(this.group, key, 1.0);
+          } else if (isActive()) {
+            // https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_gotoandloop
+            const key = keyPrefix + "_gotoandloop";
+            console.log("CueLoopsLayer: pressed pad key=" + key);
+            engine.setValue(this.group, key, 1.0);
+          } else {
+            // https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_setloop
+            const key = keyPrefix + "_setloop";
+            console.log("CueLoopsLayer: pressed pad key=" + key);
+            engine.setValue(this.group, key, 1.0);
+          }
+        } else {
+          engine.setValue(this.group, "reloop_toggle", 1.0);
+        }
+      }
+    }
+  }
+
+  class SandboxLayer extends Layer {
     constructor(group) {
       super(group);
       this.deck = 1; // script.deckFromGroup(this.group);
@@ -360,18 +432,18 @@
     }
 
     pad(numberPad, isPressed) {
-      console.log("PerfomanceLayer: pad() numberPad=" + numberPad);
+      console.log("SandboxLayer: pad() numberPad=" + numberPad);
       switch (numberPad) {
         case 1:
-          if (isPressed) engine.setValue(this.group, "sync_key", 1);
+          if (isPressed) engine.setValue(this.group, "hotcue_1_activateloop", 1);
         case 2:
-          if (isPressed) engine.setValue(this.group, "reset_key", 1);
+          if (isPressed) engine.setValue(this.group, "hotcue_1_cueloop", 1);
           break;
         case 3:
-          if (isPressed) engine.setValue(this.group, "pitch_down", 1);
+          if (isPressed) engine.setValue(this.group, "hotcue_2_activateloop", 1);
           break;
         case 4:
-          if (isPressed) engine.setValue(this.group, "pitch_up", 1);
+          if (isPressed) engine.setValue(this.group, "hotcue_2_cueloop", 1);
           break;
         case 5:
           engine.setValue(this.group, "beats_translate_curpos", isPressed);
@@ -475,10 +547,14 @@
       }
     }
 
+    /**
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_activatecue
+     * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_clear
+     */
     pad(numberPad, isPressed) {
       console.log("HotCuesLayer: pressed pad " + numberPad + ", shift=" + this.pressedShift);
 
-      const operation = this.pressedShift ? "_clear" : "_activate";
+      const operation = this.pressedShift ? "_clear" : "_activatecue";
       const key = "hotcue_" + this.mapPadToHotCue[numberPad] + operation;
       engine.setValue(this.group, key, isPressed ? 1.0 : 0.0);
     }
@@ -488,12 +564,18 @@
     constructor(options) {
       super(options.deck);
 
+      // row 1 
+      // hotcues bank b
+      this.looprollLayer = new LoopRollLayer(this.group);
+      this.cueloopLayer = new CueLoopLayer(this.group);
+      this.sandboxLayer = new SandboxLayer(this.group);
+
+      // row 2
       this.hotcuesLayer = new HotCuesLayer(this.group);
       this.autoloopLayer = new AutoLoopLayer(this.group);
       this.beatjumpsLayer = new BeatJumpLayer(this.group);
-      this.perfomanceLayer = new PerfomanceLayer(this.group);
-      this.looprollLayer = new LoopRollLayer(this.group);
       this.deckSettingsLayer = new DeckSettingsLayer(this.group);
+
       this.currentLayerNum = 1;
     }
 
@@ -505,20 +587,22 @@
     currentLayer() {
       console.log("SwitchLayersLayer: currentLayer() " + this.currentLayerNum);
       switch (this.currentLayerNum) {
-        // case 1: - default
+        case 1:
+          return this.hotcuesLayer;
         case 2:
           return this.looprollLayer;
+        case 3:
+          return this.cueloopLayer;
         case 4:
-          return this.deckSettingsLayer;
+          return this.sandboxLayer;
+        case 5:
+          return this.hotcuesLayer;
         case 6:
           return this.autoloopLayer;
         case 7:
           return this.beatjumpsLayer;
         case 8:
-          return this.perfomanceLayer;
-        default:
-          //   console.log("SwitchLayersLayer: currentLayer() hotcuesLayer " + this.hotcuesLayer);
-          return this.hotcuesLayer;
+          return this.deckSettingsLayer;
       }
     }
 
