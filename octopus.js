@@ -356,10 +356,10 @@
   }
 
   class CueLoopLayer extends Layer {
-    constructor(group) {
-      super(group);
+    constructor(options) {
+      super(options.group);
 
-      this.offset = 8;
+      this.offset = options.offset;
       this.count = 7;
 
       this.connections = new Map();
@@ -501,26 +501,11 @@
     }
   }
 
-  /**
-   * Расположение hotcue отличается от номерации в Layer!
-   * [5][6][7][8]
-   * [1][2][3][4].
-   */
   class HotCuesLayer extends Layer {
-    constructor(group) {
-      super(group);
+    constructor(options) {
+      super(options.group);
 
-      const mapPadToHotCue = new Map();
-      mapPadToHotCue[1] = 5;
-      mapPadToHotCue[2] = 6;
-      mapPadToHotCue[3] = 7;
-      mapPadToHotCue[4] = 8;
-      mapPadToHotCue[5] = 1;
-      mapPadToHotCue[6] = 2;
-      mapPadToHotCue[7] = 3;
-      mapPadToHotCue[8] = 4;
-      this.mapPadToHotCue = mapPadToHotCue;
-
+      this.offset = options.offset;
       this.connections = new Map();
 
       for (let number = 1; number <= 8; number++) {
@@ -531,12 +516,12 @@
     connection(number) {
       const callback = function (value, group, control) {
         console.log("HotCuesLayer: testing makeConnection number=" + number + ", value=" + value + ", control=" + control);
-        this.output.led(this.mapPadToHotCue[number], value == 0 ? LedValue.OFF : LedValue.ON);
+        this.output.led(number, value == 0 ? LedValue.OFF : LedValue.ON);
       };
 
       return engine.makeConnection(
         this.group,
-        "hotcue_" + number + "_status",
+        "hotcue_" + (number + this.offset) + "_status",
         callback.bind(this)
       );
     }
@@ -552,10 +537,9 @@
      * https://manual.mixxx.org/2.5/ru/chapters/appendix/mixxx_controls#control-%5BChannelN%5D-hotcue_X_clear
      */
     pad(numberPad, isPressed) {
-      console.log("HotCuesLayer: pressed pad " + numberPad + ", shift=" + this.pressedShift);
-
       const operation = this.pressedShift ? "_clear" : "_activatecue";
-      const key = "hotcue_" + this.mapPadToHotCue[numberPad] + operation;
+      const key = "hotcue_" + (numberPad + this.offset) + operation;
+      console.log("HotCuesLayer: pressed pad " + numberPad + ", shift=" + this.pressedShift + ", key=" + key);
       engine.setValue(this.group, key, isPressed ? 1.0 : 0.0);
     }
   }
@@ -564,14 +548,23 @@
     constructor(options) {
       super(options.deck);
 
-      // row 1 
-      // hotcues bank b
+      // row 1
+      this.hotcuesLayerBankB = new HotCuesLayer({
+        offset: 8,
+        group: this.group,
+      });
       this.looprollLayer = new LoopRollLayer(this.group);
-      this.cueloopLayer = new CueLoopLayer(this.group);
+      this.cueloopLayer = new CueLoopLayer({
+        group: this.group,
+        offset: 16, // Отступаем от обычных hotcues
+      });
       this.sandboxLayer = new SandboxLayer(this.group);
 
       // row 2
-      this.hotcuesLayer = new HotCuesLayer(this.group);
+      this.hotcuesLayerBankA = new HotCuesLayer({
+        offset: 0,
+        group: this.group,
+      });
       this.autoloopLayer = new AutoLoopLayer(this.group);
       this.beatjumpsLayer = new BeatJumpLayer(this.group);
       this.deckSettingsLayer = new DeckSettingsLayer(this.group);
@@ -588,7 +581,7 @@
       console.log("SwitchLayersLayer: currentLayer() " + this.currentLayerNum);
       switch (this.currentLayerNum) {
         case 1:
-          return this.hotcuesLayer;
+          return this.hotcuesLayerBankB;
         case 2:
           return this.looprollLayer;
         case 3:
@@ -596,7 +589,7 @@
         case 4:
           return this.sandboxLayer;
         case 5:
-          return this.hotcuesLayer;
+          return this.hotcuesLayerBankA;
         case 6:
           return this.autoloopLayer;
         case 7:
@@ -641,11 +634,9 @@
       if (this.isSwitchLayerState) {
         this.switchLayersLayer.currentLayer().disconnect();
         this.switchLayersLayer.connect(this.output);
-        this.switchLayersLayer.updateLedState();
       } else {
         this.switchLayersLayer.disconnect();
         this.switchLayersLayer.currentLayer().connect(this.output);
-        this.switchLayersLayer.currentLayer().updateLedState();
       }
     };
 
@@ -730,6 +721,15 @@
     switchLayerButton(channel, control, value, status, group) {
       console.log("GroupedInputs: switchLayerButton()");
       this.inputs[group].switchLayerButton(value);
+    }
+
+    init() {
+      this.groupsArray.forEach((group) => {
+        const input = this.inputs[group];
+        if (input instanceof Input) {
+          input.shift(this.pressedShift);
+        }
+      })
     }
   }
 
