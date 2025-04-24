@@ -286,7 +286,7 @@
     }
 
     pad(numberPad, isPressed) {
-      if (numberPad < 4) {
+      if (numberPad <= 4) {
         if (isPressed) {
           this.currentMode = numberPad;
           console.log("DeckSettingsLayer: pad() change mode, currentMode=" + this.currentMode);
@@ -294,8 +294,6 @@
           this.currentMode = 0;
           console.log("DeckSettingsLayer: pad() reset mode");
         }
-      } else if (numberPad == 4 && isPressed) {
-        // включить - выключить отображение bpm
       } else if (isPressed) {
         const value = numberPad - 4;
         console.log("DeckSettingsLayer: pad() use mode, value=" + value);
@@ -307,10 +305,9 @@
             this.changeCrossfadeOrientation(value);
             break;
           case 3:
-            // sync, beats_translate_curpos
+            this.changeKey(value);
             break;
           default:
-            this.changeKey(value);
             break;
         }
       }

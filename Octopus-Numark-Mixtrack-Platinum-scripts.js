@@ -838,7 +838,8 @@ MixtrackPlatinum.sendScreenTimeMidi = function(deck, time) {
 };
 
 MixtrackPlatinum.sendScreenBpmMidi = function(deck, bpm) {
-    bpmArray = MixtrackPlatinum.encodeNumToArray(bpm);
+    // bpm = 22900.0
+    const bpmArray = MixtrackPlatinum.encodeNumToArray(bpm);
     bpmArray.shift();
     bpmArray.shift();
 
@@ -943,10 +944,15 @@ MixtrackPlatinum.scratchDisable = function (deck) {
 MixtrackPlatinum.scratchEnable = function (deck) {
     var alpha = 1.0/8;
     var beta = alpha/32;
-    var value = 1400
+
+    var ramp = true
+
+    // https://github.com/mixxxdj/mixxx/wiki/midi%20scripting#scratching-and-jog-wheels
+    // the resolution of the MIDI control (in intervals per revolution, typically 128.)
+    var intervalsPerRev = 1400
 
     /*
-        Изначально value было 1240.
+        Изначально intervalsPerRev было 1240.
         Увеличение значения - led индикация отстаёт от реальной позиции джога.
         Уменьшение наоборот, делает индикацию быстрее.
         Значение зависит от размера аудио буффера, устройства вывода, количества активных дек, и похоже ещё от фазы
@@ -955,7 +961,7 @@ MixtrackPlatinum.scratchEnable = function (deck) {
         SP404MK2 в качестве аудио выхода, 2 деки, буффер 2.9ms = 1400.
     */
 
-    engine.scratchEnable(deck, 1400, 33+1/3, alpha, beta);
+    engine.scratchEnable(deck, intervalsPerRev, 33+1/3, alpha, beta, ramp);
     MixtrackPlatinum.stopScratchTimer(deck);
 };
 
@@ -1077,11 +1083,11 @@ MixtrackPlatinum.wheelTurn = function (channel, control, value, status, group) {
 
 MixtrackPlatinum.wheel = []; // initialized in the MixtrackPlatinum.init() function
 MixtrackPlatinum.wheelToggle = function (channel, control, value, status, group) {
-    if (value != 0x7F) return;
-    MixtrackPlatinum.wheel[channel] = !MixtrackPlatinum.wheel[channel];
-    var on_off = 0x01;
-    if (MixtrackPlatinum.wheel[channel]) on_off = 0x7F;
-    midi.sendShortMsg(0x90 | channel, 0x07, on_off);
+    // if (value != 0x7F) return;
+    // MixtrackPlatinum.wheel[channel] = !MixtrackPlatinum.wheel[channel];
+    // var on_off = 0x01;
+    // if (MixtrackPlatinum.wheel[channel]) on_off = 0x7F;
+    // midi.sendShortMsg(0x90 | channel, 0x07, on_off);
 };
 
 MixtrackPlatinum.deckSwitch = function (channel, control, value, status, group) {
